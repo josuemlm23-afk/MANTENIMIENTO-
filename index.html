@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>Registro de Mantenimiento</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=DM+Mono:wght@500&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --navy:#0f2542;--navy2:#1a3a5c;--navy3:#1e4876;
+  --accent:#f59e0b;--accent2:#fbbf24;
+  --bg:#f4f6f9;--card:#fff;
+  --text:#111827;--text2:#4b5563;--text3:#9ca3af;
+  --border:#e5e7eb;
+  --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#3b82f6;
+  --r:12px;--rs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding-bottom:90px;}
+
+/* ── SETUP SCREEN ── */
+#setup-screen{
+  min-height:100vh;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:24px;background:var(--navy);
+}
+#setup-screen .logo{
+  width:64px;height:64px;background:var(--accent);border-radius:16px;
+  display:flex;align-items:center;justify-content:center;margin-bottom:24px;
+}
+#setup-screen h1{color:#fff;font-size:22px;font-weight:600;margin-bottom:6px;text-align:center;}
+#setup-screen p{color:rgba(255,255,255,0.5);font-size:14px;text-align:center;margin-bottom:32px;line-height:1.6;}
+.setup-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:var(--r);padding:20px;width:100%;max-width:400px;margin-bottom:12px;}
+.setup-card h2{color:rgba(255,255,255,0.8);font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:14px;}
+.setup-field{margin-bottom:12px;}
+.setup-field:last-child{margin-bottom:0;}
+.setup-field label{display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:5px;}
+.setup-field input{
+  width:100%;padding:11px 13px;
+  background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:var(--rs);font-size:14px;font-family:'DM Sans',sans-serif;
+  color:#fff;transition:border-color 0.15s;
+}
+.setup-field input:focus{outline:none;border-color:var(--accent);background:rgba(255,255,255,0.12);}
+.setup-field input::placeholder{color:rgba(255,255,255,0.25);}
+.btn-connect{
+  width:100%;max-width:400px;padding:14px;background:var(--accent);color:var(--navy);
+  border:none;border-radius:var(--r);font-size:15px;font-weight:700;
+  font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity 0.15s;
+}
+.btn-connect:active{opacity:0.85;}
+.setup-hint{color:rgba(255,255,255,0.3);font-size:12px;text-align:center;margin-top:16px;line-height:1.6;max-width:340px;}
+.setup-hint a{color:var(--accent);text-decoration:none;}
+
+/* ── HEADER ── */
+.header{background:var(--navy);position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,0.2);}
+.header-inner{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;}
+.header-logo{width:36px;height:36px;background:var(--accent);border-radius:var(--rs);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.header-logo svg{width:20px;height:20px;}
+.header-title{flex:1;}
+.header-title h1{font-size:15px;font-weight:600;color:#fff;letter-spacing:-0.2px;}
+.header-title p{font-size:11px;color:rgba(255,255,255,0.4);margin-top:1px;}
+.header-date{font-family:'DM Mono',monospace;font-size:10px;color:rgba(255,255,255,0.35);text-align:right;line-height:1.5;}
+.conn-dot{width:7px;height:7px;border-radius:50%;background:#6b7280;display:inline-block;margin-right:4px;transition:background 0.3s;}
+.conn-dot.online{background:var(--success);}
+.tabs-wrapper{background:var(--navy);padding:0 16px 12px;}
+.tabs{display:flex;background:rgba(255,255,255,0.07);border-radius:var(--rs);padding:3px;gap:3px;}
+.tab{flex:1;padding:9px 8px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.5);background:transparent;border:none;border-radius:6px;cursor:pointer;transition:all 0.2s;font-family:'DM Sans',sans-serif;text-align:center;}
+.tab.active{background:var(--accent);color:var(--navy);font-weight:700;}
+
+/* ── CONTENT ── */
+.content{padding:16px;}
+.section-divider{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;margin:6px 0 10px;display:flex;align-items:center;gap:8px;}
+.section-divider::after{content:'';flex:1;height:1px;background:var(--border);}
+.card{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:12px;border:1px solid var(--border);}
+.field{margin-bottom:14px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;}
+.field label .req{color:var(--accent);margin-left:2px;}
+.field input,.field select,.field textarea{
+  width:100%;padding:11px 13px;border:1.5px solid var(--border);
+  border-radius:var(--rs);font-size:15px;font-family:'DM Sans',sans-serif;
+  color:var(--text);background:var(--bg);transition:border-color 0.15s,box-shadow 0.15s;-webkit-appearance:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy2);box-shadow:0 0 0 3px rgba(26,58,92,0.1);background:#fff;}
+.field textarea{resize:vertical;min-height:90px;line-height:1.5;}
+.field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:36px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+.tech-banner{background:linear-gradient(135deg,#0f2542,#1e4876);border-radius:var(--r);padding:16px;margin-bottom:12px;}
+.tech-banner .field label{color:rgba(255,255,255,0.5);}
+.tech-banner .field input{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15);color:#fff;font-size:16px;font-weight:500;}
+.tech-banner .field input::placeholder{color:rgba(255,255,255,0.3);}
+.tech-banner .field input:focus{background:rgba(255,255,255,0.15);border-color:var(--accent);box-shadow:0 0 0 3px rgba(245,158,11,0.2);}
+.tech-footer{display:flex;align-items:center;gap:10px;margin-top:12px;}
+.tech-avatar{width:40px;height:40px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:var(--navy);flex-shrink:0;}
+.tech-hint{color:rgba(255,255,255,0.35);font-size:12px;line-height:1.5;}
+
+.btn-submit{
+  width:100%;padding:15px;background:var(--navy);color:#fff;border:none;
+  border-radius:var(--r);font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all 0.2s;margin-top:4px;
+}
+.btn-submit:active{transform:scale(0.98);opacity:0.9;}
+.btn-submit:disabled{opacity:0.5;cursor:not-allowed;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
+  padding:12px 20px;border-radius:100px;font-size:14px;font-weight:500;
+  box-shadow:0 4px 20px rgba(0,0,0,0.2);transition:transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  z-index:999;white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.success{background:var(--success);color:#fff;}
+.toast.error{background:var(--danger);color:#fff;}
+
+/* ── LIST ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat-card{background:var(--card);border-radius:var(--rs);padding:10px;text-align:center;border:1px solid var(--border);}
+.stat-card .num{font-size:22px;font-weight:600;color:var(--navy);font-family:'DM Mono',monospace;}
+.stat-card .lbl{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-top:2px;}
+.filter-row{display:flex;gap:8px;margin-bottom:10px;}
+.filter-row input,.filter-row select{
+  flex:1;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);
+  font-size:13px;font-family:'DM Sans',sans-serif;background:var(--card);color:var(--text);-webkit-appearance:none;
+}
+.filter-row input:focus,.filter-row select:focus{outline:none;border-color:var(--navy2);}
+.export-btn{
+  width:100%;padding:11px;border:1.5px solid var(--navy);background:transparent;
+  color:var(--navy);border-radius:var(--rs);font-size:13px;font-weight:600;
+  font-family:'DM Sans',sans-serif;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:6px;margin-bottom:16px;transition:all 0.15s;
+}
+.export-btn:active{background:var(--navy);color:#fff;}
+.record-card{background:var(--card);border-radius:var(--r);margin-bottom:10px;border:1px solid var(--border);overflow:hidden;}
+.record-card-header{padding:12px 14px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);}
+.rec-avatar{width:36px;height:36px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--accent);flex-shrink:0;}
+.rec-info{flex:1;min-width:0;}
+.rec-info .name{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rec-info .meta{font-size:11px;color:var(--text3);margin-top:1px;}
+.badge{display:inline-block;font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.3px;}
+.badge-completado{background:#d1fae5;color:#065f46;}
+.badge-proceso{background:#fef3c7;color:#92400e;}
+.badge-pendiente{background:#fee2e2;color:#991b1b;}
+.badge-default{background:#f3f4f6;color:#374151;}
+.record-card-body{padding:12px 14px;}
+.rec-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.rec-field .lbl{font-size:10px;text-transform:uppercase;letter-spacing:0.5px;color:var(--text3);margin-bottom:2px;}
+.rec-field .val{font-size:13px;font-weight:500;}
+.rec-field.full{grid-column:1/-1;}
+.tipo-pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600;}
+.tipo-prev{background:#d1fae5;color:#065f46;}
+.tipo-corr{background:#fef3c7;color:#92400e;}
+.tipo-pred{background:#dbeafe;color:#1e40af;}
+.tipo-inst{background:#ede9fe;color:#4c1d95;}
+.tipo-otro{background:#f3f4f6;color:#374151;}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--text3);font-size:11px;padding:8px;width:100%;border-top:1px solid var(--border);font-family:'DM Sans',sans-serif;transition:color 0.15s;}
+.del-btn:active{color:var(--danger);}
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3);}
+.empty-state svg{width:48px;height:48px;margin-bottom:12px;opacity:0.25;}
+.loading-spinner{text-align:center;padding:40px;color:var(--text3);font-size:14px;}
+.live-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--success);background:#d1fae5;padding:3px 8px;border-radius:20px;margin-left:8px;}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--success);animation:pulse 1.5s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+
+/* ── INSTRUCCIONES FIREBASE ── */
+.instructions{background:var(--card);border-radius:var(--r);padding:16px;margin-bottom:16px;border:1px solid var(--border);}
+.instructions h3{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.instructions ol{padding-left:18px;}
+.instructions li{font-size:13px;color:var(--text2);line-height:1.8;margin-bottom:2px;}
+.instructions a{color:var(--info);text-decoration:none;font-weight:500;}
+.instructions code{background:#f3f4f6;padding:1px 5px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px;color:var(--navy);}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SETUP SCREEN ══════════════ -->
+<div id="setup-screen">
+  <div class="logo">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#0f2542" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:32px;height:32px;">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+    </svg>
+  </div>
+  <h1>Registro de Mantenimiento</h1>
+  <p>Conecta con tu base de datos Firebase<br>para guardar registros en la nube</p>
+
+  <div class="setup-card">
+    <h2>🔑 Credenciales Firebase</h2>
+    <div class="setup-field">
+      <label>API Key</label>
+      <input type="text" id="cfg-apiKey" placeholder="AIzaSy..." autocomplete="off"/>
+    </div>
+    <div class="setup-field">
+      <label>Project ID</label>
+      <input type="text" id="cfg-projectId" placeholder="mi-empresa-mantenimiento" autocomplete="off"/>
+    </div>
+    <div class="setup-field">
+      <label>App ID</label>
+      <input type="text" id="cfg-appId" placeholder="1:123456789:web:abc..." autocomplete="off"/>
+    </div>
+  </div>
+
+  <button class="btn-connect" onclick="conectarFirebase()">Conectar y entrar →</button>
+
+  <p class="setup-hint">
+    ¿No tienes Firebase aún?<br>
+    Es gratis. Sigue las instrucciones de la pestaña<br>
+    "¿Cómo configurarlo?" dentro de la app.<br><br>
+    <a href="https://console.firebase.google.com" target="_blank">→ Ir a Firebase Console</a>
+  </p>
+</div>
+
+<!-- ══════════════ MAIN APP ══════════════ -->
+<div id="main-app" style="display:none;">
+
+  <div class="header">
+    <div class="header-inner">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#0f2542" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+        </svg>
+      </div>
+      <div class="header-title">
+        <h1>Mantenimiento <span class="live-badge"><span class="live-dot"></span>EN VIVO</span></h1>
+        <p><span class="conn-dot" id="conn-dot"></span><span id="conn-label">Conectando...</span></p>
+      </div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+    <div class="tabs-wrapper">
+      <div class="tabs">
+        <button class="tab active" onclick="showTab('form')" id="tab-form">✏️ Registrar</button>
+        <button class="tab" onclick="showTab('list')" id="tab-list">📋 Registros</button>
+        <button class="tab" onclick="showTab('help')" id="tab-help">⚙️ Config</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ── FORM ── -->
+  <div id="view-form" class="content">
+    <div class="tech-banner">
+      <div class="field" style="margin-bottom:10px;">
+        <label style="color:rgba(255,255,255,0.5);">NOMBRE DEL TÉCNICO <span class="req">*</span></label>
+        <div style="display:flex;gap:8px;"><input type="text" id="f-nombre" placeholder="Tu nombre completo" autocomplete="name" oninput="updateAvatar()" style="flex:1;"/><button onclick="guardarNombre()" style="padding:0 14px;background:#f59e0b;color:#0f2542;border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:DM Sans,sans-serif;cursor:pointer;white-space:nowrap;flex-shrink:0;">💾 Recordar</button></div>
+      </div>
+      <div class="tech-footer">
+        <div class="tech-avatar" id="avatar">?</div>
+        <div class="tech-hint"><span id="tech-hint-txt">Escribe tu nombre y toca 💾 Recordar para no escribirlo cada vez.</span></div>
+      </div>
+    </div>
+
+    <div class="section-divider">Información de la orden</div>
+    <div class="card">
+      <div class="row2">
+        <div class="field">
+          <label>Fecha <span class="req">*</span></label>
+          <input type="date" id="f-fecha"/>
+        </div>
+        <div class="field">
+          <label>Área</label>
+          <input type="text" id="f-area" placeholder="Ej: Producción"/>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Negocio</label>
+          <input type="text" id="f-negocio" placeholder="Negocio"/>
+        </div>
+        <div class="field">
+          <label>Nave</label>
+          <input type="text" id="f-nave" placeholder="Nave / Piso"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Quién solicita</label>
+        <input type="text" id="f-solicita" placeholder="Nombre de quien solicita"/>
+      </div>
+    </div>
+
+    <div class="section-divider">Trabajo realizado</div>
+    <div class="card">
+      <div class="field">
+        <label>Equipo / Máquina <span class="req">*</span></label>
+        <input type="text" id="f-equipo" placeholder="Nombre del equipo o máquina"/>
+      </div>
+      <div class="field">
+        <label>Actividad realizada <span class="req">*</span></label>
+        <textarea id="f-actividad" placeholder="Describe detalladamente la actividad que realizaste..."></textarea>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Tipo de mantenimiento</label>
+          <select id="f-tipo">
+            <option value="">Seleccionar...</option>
+            <option value="Preventivo">Preventivo</option>
+            <option value="Correctivo">Correctivo</option>
+            <option value="Predictivo">Predictivo</option>
+            <option value="Instalación">Instalación</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Estado</label>
+          <select id="f-estado">
+            <option value="">Seleccionar...</option>
+            <option value="Completado">Completado</option>
+            <option value="En proceso">En proceso</option>
+            <option value="Pendiente">Pendiente</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Observaciones</label>
+        <textarea id="f-obs" placeholder="Notas adicionales, refacciones usadas, próximos pasos..." style="min-height:70px;"></textarea>
+      </div>
+    </div>
+
+    <button class="btn-submit" onclick="guardar()" id="btn-guardar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Guardar en la nube
+    </button>
+  </div>
+
+  <!-- ── LIST ── -->
+  <div id="view-list" class="content" style="display:none;">
+    <div class="stats-row">
+      <div class="stat-card"><div class="num" id="stat-total">0</div><div class="lbl">Total</div></div>
+      <div class="stat-card"><div class="num" id="stat-hoy">0</div><div class="lbl">Hoy</div></div>
+      <div class="stat-card"><div class="num" id="stat-comp">0</div><div class="lbl">Completos</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">
+      <div style="flex:1;font-size:12px;color:var(--text3);" id="admin-status">🔒 Solo admin puede eliminar</div>
+      <button onclick="pedirAdmin()" id="btn-admin" style="padding:7px 14px;background:var(--navy);color:#fff;border:none;border-radius:var(--rs);font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">🔐 Admin</button>
+    </div>
+    <div class="filter-row">
+      <input type="text" id="filter-nombre" placeholder="🔍 Técnico..." oninput="applyFilters()"/>
+      <input type="date" id="filter-fecha" oninput="applyFilters()"/>
+    </div>
+    <button class="export-btn" onclick="exportCSV()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exportar a Excel (.csv)
+    </button>
+    <div id="records-container"><div class="loading-spinner">⏳ Cargando registros...</div></div>
+  </div>
+
+  <!-- ── HELP ── -->
+  <div id="view-help" class="content" style="display:none;">
+    <div class="instructions">
+      <h3>🚀 Cómo crear tu Firebase gratis</h3>
+      <ol>
+        <li>Ve a <a href="https://console.firebase.google.com" target="_blank">console.firebase.google.com</a></li>
+        <li>Clic en <strong>"Crear un proyecto"</strong> → ponle un nombre → continuar</li>
+        <li>Una vez creado, en el menú lateral: <strong>Compilación → Firestore Database</strong></li>
+        <li>Clic <strong>"Crear base de datos"</strong> → elegir <strong>modo de prueba</strong> → siguiente</li>
+        <li>En el menú lateral: <strong>Configuración del proyecto ⚙️</strong> → pestaña <strong>"General"</strong></li>
+        <li>En "Tus apps", clic en el ícono web <code>&lt;/&gt;</code>, registra la app</li>
+        <li>Copia los valores de <code>apiKey</code>, <code>projectId</code> y <code>appId</code></li>
+        <li>Regresa al inicio de esta app y pégalos en la pantalla de configuración</li>
+      </ol>
+    </div>
+    <div class="instructions">
+      <h3>🔒 Reglas de seguridad (importante)</h3>
+      <ol>
+        <li>En Firebase Console → Firestore → <strong>Reglas</strong></li>
+        <li>Pega este código y publica:<br>
+          <code style="display:block;margin-top:6px;padding:8px;background:#f9fafb;border-radius:6px;line-height:1.8;white-space:pre-wrap;">rules_version = '2';
+service cloud.firestore {
+  match /databases/{db}/documents {
+    match /registros/{id} {
+      allow read, write: if true;
+    }
+  }
+}</code>
+        </li>
+      </ol>
+    </div>
+    <div class="instructions">
+      <h3>📤 Cómo compartir con tus técnicos</h3>
+      <ol>
+        <li>Sube este archivo HTML a <a href="https://drive.google.com" target="_blank">Google Drive</a></li>
+        <li>Comparte el link con tus técnicos</li>
+        <li>Cada técnico abre el link, pone las credenciales de Firebase y ya puede registrar</li>
+        <li>Tú ves todos los registros en tiempo real desde la pestaña "Registros"</li>
+      </ol>
+    </div>
+    <div style="margin-top:8px;">
+      <button onclick="cerrarSesion()" style="width:100%;padding:12px;border:1.5px solid var(--danger);background:transparent;color:var(--danger);border-radius:var(--rs);font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;">
+        Cambiar credenciales Firebase
+      </button>
+    </div>
+  </div>
+
+</div><!-- /main-app -->
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import {
+  getFirestore, collection, addDoc, onSnapshot, query,
+  orderBy, deleteDoc, doc, serverTimestamp
+} from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+const ADMIN_PIN = '1234'; // <-- CAMBIA ESTE NÚMERO POR TU PIN
+let isAdmin = false;
+let db = null;
+let allRecords = [];
+let unsubscribe = null;
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+const todayStr = () => new Date().toISOString().split('T')[0];
+const $ = id => document.getElementById(id);
+const gv = id => $(id).value.trim();
+
+function getInitials(name){
+  if(!name)return'?';
+  const p=name.trim().split(' ').filter(Boolean);
+  return p.length>=2?(p[0][0]+p[1][0]).toUpperCase():name.substring(0,2).toUpperCase();
+}
+
+function showToast(msg, type='success'){
+  const t=$('toast');
+  t.textContent=msg;
+  t.className=`toast ${type} show`;
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+function setConn(online){
+  const dot=$('conn-dot');
+  const lbl=$('conn-label');
+  dot.className='conn-dot'+(online?' online':'');
+  lbl.textContent=online?'En línea':'Sin conexión';
+}
+
+function initHeader(){
+  const d=new Date();
+  const dias=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const meses=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  $('header-date').innerHTML=`${dias[d.getDay()]} ${d.getDate()}<br>${meses[d.getMonth()]} ${d.getFullYear()}`;
+  $('f-fecha').value=todayStr();
+}
+
+// ── AVATAR ─────────────────────────────────────────────────────────────────
+window.updateAvatar=function(){
+  const name=gv('f-nombre');
+  $('avatar').textContent=name?getInitials(name):'?';
+};
+
+// ── RECORDAR NOMBRE ────────────────────────────────────────────────────────
+window.guardarNombre=function(){
+  const name=$('f-nombre').value.trim();
+  if(!name){alert('Escribe tu nombre primero');return;}
+  localStorage.setItem('tecnico_nombre',name);
+  const hint=document.getElementById('tech-hint-txt');
+  if(hint){hint.innerHTML='✅ Nombre guardado. Ya no tendrás que escribirlo.';}
+  showToast('✓ Nombre recordado en este celular','success');
+};
+
+// ── ADMIN ──────────────────────────────────────────────────────────────────
+window.pedirAdmin=function(){
+  const pin=prompt('Ingresa tu PIN de administrador:');
+  if(pin===ADMIN_PIN){
+    isAdmin=true;
+    showToast('✓ Modo administrador activado','success');
+    renderList();
+  } else {
+    alert('PIN incorrecto');
+  }
+};
+
+// ── TABS ───────────────────────────────────────────────────────────────────
+window.showTab=function(t){
+  ['form','list','help'].forEach(v=>{
+    $('view-'+v).style.display=v===t?'block':'none';
+    $('tab-'+v).className='tab'+(v===t?' active':'');
+  });
+};
+
+// ── FIREBASE CONNECT ───────────────────────────────────────────────────────
+window.conectarFirebase=function(){
+  const apiKey=gv('cfg-apiKey');
+  const projectId=gv('cfg-projectId');
+  const appId=gv('cfg-appId');
+  if(!apiKey||!projectId||!appId){alert('Por favor completa todos los campos');return;}
+  try{
+    const cfg={apiKey,projectId,appId,authDomain:`${projectId}.firebaseapp.com`,storageBucket:`${projectId}.appspot.com`,messagingSenderId:'000000000000'};
+    const firebaseApp=initializeApp(cfg);
+    db=getFirestore(firebaseApp);
+    localStorage.setItem('fb_cfg',JSON.stringify({apiKey,projectId,appId}));
+    $('setup-screen').style.display='none';
+    $('main-app').style.display='block';
+    initHeader();
+    setConn(true);
+    // Cargar nombre guardado
+    const savedNombre=localStorage.getItem('tecnico_nombre');
+    if(savedNombre){
+      $('f-nombre').value=savedNombre;
+      updateAvatar();
+      const hint=document.getElementById('tech-hint-txt');
+      if(hint){hint.innerHTML='✅ Bienvenido <strong style="color:#f59e0b;">'+savedNombre+'</strong>. Tu nombre ya está guardado.';}
+    }
+    startListening();
+  }catch(e){
+    alert('Error al conectar: '+e.message);
+  }
+};
+
+// ── LISTEN REAL-TIME ───────────────────────────────────────────────────────
+function startListening(){
+  if(!db)return;
+  if(unsubscribe)unsubscribe();
+  const q=query(collection(db,'registros'),orderBy('ts','desc'));
+  unsubscribe=onSnapshot(q,
+    snap=>{
+      setConn(true);
+      allRecords=snap.docs.map(d=>({id:d.id,...d.data()}));
+      renderList();
+    },
+    err=>{setConn(false);console.error(err);}
+  );
+}
+
+// ── GUARDAR ────────────────────────────────────────────────────────────────
+window.guardar=async function(){
+  const nombre=gv('f-nombre');
+  const equipo=gv('f-equipo');
+  const actividad=gv('f-actividad');
+  if(!nombre){alert('⚠️ Ingresa tu nombre');$('f-nombre').focus();return;}
+  if(!equipo){alert('⚠️ Ingresa el equipo o máquina');$('f-equipo').focus();return;}
+  if(!actividad){alert('⚠️ Describe la actividad realizada');$('f-actividad').focus();return;}
+  if(!db){alert('Sin conexión a Firebase');return;}
+
+  const btn=$('btn-guardar');
+  btn.disabled=true;btn.textContent='Guardando...';
+
+  try{
+    await addDoc(collection(db,'registros'),{
+      nombre,
+      fecha:$('f-fecha').value,
+      area:gv('f-area'),negocio:gv('f-negocio'),nave:gv('f-nave'),
+      solicita:gv('f-solicita'),equipo,actividad,
+      tipo:$('f-tipo').value,estado:$('f-estado').value,obs:gv('f-obs'),
+      ts:serverTimestamp(),
+      tsLocal:new Date().toISOString()
+    });
+    ['f-area','f-negocio','f-nave','f-solicita','f-equipo','f-actividad','f-tipo','f-estado','f-obs']
+      .forEach(id=>{$(id).value='';});
+    showToast('✓ Registro guardado en la nube','success');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }catch(e){
+    showToast('❌ Error: '+e.message,'error');
+  }
+  btn.disabled=false;
+  btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Guardar en la nube';
+};
+
+// ── RENDER LIST ────────────────────────────────────────────────────────────
+window.applyFilters=renderList;
+
+function renderList(){
+  const fn=(gv('filter-nombre')||'').toLowerCase();
+  const ff=$('filter-fecha').value;
+  const today=todayStr();
+
+  const filtered=allRecords.filter(r=>{
+    if(fn&&!r.nombre.toLowerCase().includes(fn))return false;
+    if(ff&&r.fecha!==ff)return false;
+    return true;
+  });
+
+  $('stat-total').textContent=allRecords.length;
+  $('stat-hoy').textContent=allRecords.filter(r=>r.fecha===today).length;
+  $('stat-comp').textContent=allRecords.filter(r=>r.estado==='Completado').length;
+
+  // Mostrar estado admin
+  const adminStatus=$('admin-status');
+  const btnAdmin=$('btn-admin');
+  if(adminStatus){adminStatus.innerHTML=isAdmin?'🟢 Modo administrador activo':'🔒 Solo admin puede eliminar';}
+  if(btnAdmin){btnAdmin.style.display=isAdmin?'none':'block';}
+
+  const el=$('records-container');
+
+  if(!filtered.length){
+    el.innerHTML=`<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg><p>${allRecords.length===0?'Aún no hay registros.':'Sin resultados con ese filtro.'}</p></div>`;
+    return;
+  }
+
+  function badgeEstado(e){
+    if(!e)return`<span class="badge badge-default">—</span>`;
+    if(e==='Completado')return`<span class="badge badge-completado">✓ Completado</span>`;
+    if(e==='En proceso')return`<span class="badge badge-proceso">⟳ En proceso</span>`;
+    if(e==='Pendiente')return`<span class="badge badge-pendiente">! Pendiente</span>`;
+    return`<span class="badge badge-default">${e}</span>`;
+  }
+  function tipoPill(t){
+    if(!t)return'—';
+    const cls={Preventivo:'prev',Correctivo:'corr',Predictivo:'pred','Instalación':'inst',Otro:'otro'}[t]||'otro';
+    return`<span class="tipo-pill tipo-${cls}">${t}</span>`;
+  }
+  function formatDate(d){
+    if(!d)return'—';
+    const[y,m,day]=d.split('-');
+    return`${day}/${m}/${y}`;
+  }
+
+  el.innerHTML=filtered.map(r=>`
+    <div class="record-card">
+      <div class="record-card-header">
+        <div class="rec-avatar">${getInitials(r.nombre)}</div>
+        <div class="rec-info">
+          <div class="name">${r.nombre||'—'}</div>
+          <div class="meta">${formatDate(r.fecha)} · ${r.area||'—'} · ${r.nave||'—'}</div>
+        </div>
+        <div>${badgeEstado(r.estado)}</div>
+      </div>
+      <div class="record-card-body">
+        <div class="rec-grid">
+          <div class="rec-field"><div class="lbl">Equipo</div><div class="val">${r.equipo||'—'}</div></div>
+          <div class="rec-field"><div class="lbl">Tipo</div><div class="val">${tipoPill(r.tipo)}</div></div>
+          <div class="rec-field full"><div class="lbl">Actividad</div><div class="val" style="font-weight:400;line-height:1.5;color:#374151;">${r.actividad||'—'}</div></div>
+          ${r.solicita?`<div class="rec-field"><div class="lbl">Solicita</div><div class="val">${r.solicita}</div></div>`:''}
+          ${r.negocio?`<div class="rec-field"><div class="lbl">Negocio</div><div class="val">${r.negocio}</div></div>`:''}
+          ${r.obs?`<div class="rec-field full"><div class="lbl">Observaciones</div><div class="val" style="font-weight:400;color:#6b7280;line-height:1.5;">${r.obs}</div></div>`:''}
+        </div>
+      </div>
+      ${isAdmin?'<button class="del-btn" onclick="eliminar('+JSON.stringify(r.id)+')" style="color:#ef4444;">🗑 Solo admin — Eliminar</button>':''}
+    </div>
+  `).join('');
+}
+
+// ── DELETE ─────────────────────────────────────────────────────────────────
+window.eliminar=async function(id){
+  if(!confirm('¿Eliminar este registro?'))return;
+  try{
+    await deleteDoc(doc(db,'registros',id));
+    showToast('Registro eliminado','success');
+  }catch(e){showToast('Error al eliminar','error');}
+};
+
+// ── EXPORT CSV ─────────────────────────────────────────────────────────────
+window.exportCSV=function(){
+  if(!allRecords.length){alert('No hay registros para exportar.');return;}
+  const headers=['ID Orden','Fecha','Área','Negocio','Nave','Quién Solicita','Equipo/Máquina','Actividad Realizada','Tipo Mantenimiento','Técnico Resp.','Estado','Observaciones'];
+  const rows=allRecords.map(r=>[
+    r.id,r.fecha,r.area,r.negocio,r.nave,r.solicita,r.equipo,r.actividad,r.tipo,r.nombre,r.estado,r.obs
+  ].map(v=>`"${(v||'').toString().replace(/"/g,'""')}"`));
+  const csv='\uFEFF'+[headers.map(h=>`"${h}"`).join(','),...rows.map(r=>r.join(','))].join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download=`registros_mantenimiento_${todayStr()}.csv`;
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+
+// ── CERRAR SESIÓN ──────────────────────────────────────────────────────────
+window.cerrarSesion=function(){
+  if(!confirm('¿Cambiar las credenciales de Firebase?'))return;
+  localStorage.removeItem('fb_cfg');
+  location.reload();
+};
+
+// ── AUTO-CONNECT con credenciales fijas ───────────────────────────────────
+(function(){
+  $('cfg-apiKey').value='AIzaSyAWXDeT5tyReIN3bB82e_Mogj5jbFdu5RM';
+  $('cfg-projectId').value='bitacora-de-mantenimineto';
+  $('cfg-appId').value='1:468955808500:web:6d1b1aa3d24e5e868014a1';
+  window.conectarFirebase();
+})();
+</script>
+</body>
+</html>
