@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Salida de Refacciones · TQ1</title>
+<style>
+:root{--bg:#f3f5f8;--card:#fff;--ink:#1b2430;--mut:#6a7686;--line:#dde3ea;--pri:#0b5cad;--pri2:#e7f0fb;--ok:#1d8a4e;--bad:#c0392b;--warn:#fff4d6}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--pri);color:#fff;padding:14px 16px}
+header h1{margin:0;font-size:18px}header p{margin:2px 0 0;font-size:13px;opacity:.85}
+.tabs{display:flex;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.tabs button{flex:1;padding:12px;border:0;background:none;font-size:15px;font-weight:600;color:var(--mut);border-bottom:3px solid transparent}
+.tabs button.on{color:var(--pri);border-color:var(--pri)}
+main{max-width:900px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px}
+label{display:block;font-size:13px;font-weight:600;color:var(--mut);margin:12px 0 4px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;font-size:16px;background:#fff;color:var(--ink)}
+textarea{min-height:64px;resize:vertical}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:560px){.row{grid-template-columns:1fr}}
+.btn{display:inline-block;padding:13px 18px;border:0;border-radius:8px;font-size:16px;font-weight:700;background:var(--pri);color:#fff;cursor:pointer}
+.btn.full{width:100%;margin-top:18px}.btn.sec{background:var(--pri2);color:var(--pri)}.btn.ok{background:var(--ok)}
+.btn:disabled{opacity:.5}
+.msg{padding:12px;border-radius:8px;margin-top:12px;font-weight:600;display:none}
+.msg.ok{background:#e3f5ea;color:var(--ok);display:block}.msg.bad{background:#fbe5e2;color:var(--bad);display:block}
+.demo{background:var(--warn);border:1px solid #f0d58a;padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:16px}
+.req{color:var(--bad)}
+.hidden{display:none}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th,.tbl td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.tbl th{background:#f7f9fb;position:sticky;top:0}
+.scroll{overflow:auto;max-height:60vh;border:1px solid var(--line);border-radius:8px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.stat{background:var(--pri2);border-radius:8px;padding:10px;text-align:center}
+.stat b{display:block;font-size:22px;color:var(--pri)}.stat span{font-size:12px;color:var(--mut)}
+.del{background:none;border:0;color:var(--bad);font-size:16px;cursor:pointer}
+.recent li{padding:6px 0;border-bottom:1px solid var(--line);font-size:14px;list-style:none}
+.recent{padding:0;margin:0}
+.seccion{margin:22px 0 2px;padding-top:14px;border-top:1px solid var(--line);font-weight:800;font-size:15px;color:var(--pri)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{padding:10px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:15px;cursor:pointer}
+.chips button.on{background:var(--pri);border-color:var(--pri);color:#fff;font-weight:700}
+#maquina{margin-top:8px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Salida de Refacciones</h1>
+  <p>Mantenimiento · TQ1 de México</p>
+  <p id="red" style="font-size:12px;margin-top:4px"></p>
+</header>
+<div class="tabs">
+  <button id="tReg" class="on" onclick="tab('reg')">Registrar salida</button>
+  <button id="tRep" onclick="tab('rep')">Reporte / Excel</button>
+</div>
+<main>
+  <div id="demoBanner" class="demo hidden"><b>Modo prueba:</b> los datos solo se guardan en este navegador. Pega tu configuración de Firebase en el código para que todos los técnicos compartan la misma base.</div>
+
+  <!-- ===== REGISTRO ===== -->
+  <section id="reg">
+    <div class="card">
+      <form id="f" autocomplete="off">
+        <div class="row">
+          <div><label>Técnico <span class="req">*</span></label><select id="tecnico" required><option value="">— Selecciona —</option><option>Josue L</option><option>Alberto</option><option>Saul</option><option>Giovani</option><option>Antonio Garrido</option><option>Miguel</option><option>Luis Martinez</option><option>Carlos</option><option>Daniel</option><option>Alejandro</option><option>Felipe Neri</option></select></div>
+          <div><label>Turno <span class="req">*</span></label>
+            <select id="turno" required><option value="">—</option><option>1er turno</option><option>2do turno</option></select></div>
+        </div>
+        <div class="row">
+          <div><label>Código / No. de parte</label><input id="codigo" placeholder="Ej. 6205-2RS"></div>
+          <div><label>Refacción <span class="req">*</span></label><input id="refaccion" list="lRef" required placeholder="Ej. Rodamiento, contactor, sensor..."></div>
+        </div>
+        <div class="row">
+          <div><label>Cantidad <span class="req">*</span></label><input id="cantidad" type="number" min="0.01" step="any" required inputmode="decimal"></div>
+          <div><label>Unidad</label>
+            <select id="unidad"><option>pza</option><option>m</option><option>kg</option><option>L</option><option>juego</option><option>caja</option></select></div>
+        </div>
+        <div class="seccion">¿Dónde se utilizó?</div>
+        <label>Máquina / Línea <span class="req">*</span></label>
+        <div class="chips" id="cMaq"></div>
+        <input id="maquina" class="hidden" placeholder="Escribe la máquina o área">
+        <label>Para qué <span class="req">*</span></label>
+        <div class="chips" id="cTipo"></div>
+        <input id="tipo" type="hidden">
+        <label>Detalle (opcional)</label>
+        <input id="coment" placeholder="Ej. motor del agitador · OT-1234">
+        <input id="ot" type="hidden">
+        <button class="btn full" id="bGuardar" type="submit">Registrar salida</button>
+        <div id="m" class="msg"></div>
+      </form>
+    </div>
+    <div class="card">
+      <b>Mis últimos registros</b>
+      <ul id="recent" class="recent"><li style="color:var(--mut)">Aún no hay registros.</li></ul>
+    </div>
+  </section>
+
+  <!-- ===== REPORTE ===== -->
+  <section id="rep" class="hidden">
+    <div class="card" id="pinCard">
+      <label>PIN de supervisor</label>
+      <input id="pin" type="password" inputmode="numeric" placeholder="PIN">
+      <button class="btn full" onclick="entrar()">Entrar</button>
+      <div id="mPin" class="msg"></div>
+    </div>
+    <div id="repBody" class="hidden">
+      <div class="card">
+        <div class="row">
+          <div><label>Desde</label><input id="dDesde" type="date"></div>
+          <div><label>Hasta</label><input id="dHasta" type="date"></div>
+        </div>
+        <label>Filtrar (técnico, refacción, máquina, código...)</label>
+        <input id="filtro" placeholder="Escribe para filtrar" oninput="pintar()">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+          <button class="btn sec" onclick="cargar()">Actualizar</button>
+          <button class="btn ok" onclick="excel()">Descargar Excel</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><b id="sReg">0</b><span>Registros</span></div>
+          <div class="stat"><b id="sTec">0</b><span>Técnicos</span></div>
+          <div class="stat"><b id="sMaq">0</b><span>Máquinas</span></div>
+        </div>
+        <div class="scroll"><table class="tbl" id="tbl"><thead><tr>
+          <th>Fecha</th><th>Técnico</th><th>Turno</th><th>Código</th><th>Refacción</th><th>Cant.</th><th>Máquina</th><th>Para qué</th><th>Detalle</th>
+        </tr></thead><tbody></tbody></table></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<datalist id="lTec"></datalist><datalist id="lRef"></datalist><datalist id="lMaq">
+  <option>KraussMaffei L1</option><option>KraussMaffei L2</option><option>Laminadora a flama</option><option>Inyectora</option><option>Compresor</option><option>Subestación / tableros</option><option>Edificio / servicios</option>
+</datalist>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+/* =================== CONFIGURACIÓN =================== */
+// 1) Pega aquí la configuración de tu proyecto Firebase (Configuración del proyecto > Tus apps > Web)
+const firebaseConfig = {
+  apiKey: "AIzaSyCpFLSmxjuf57mJq7V06TDHwoaV8NWQTN4",
+  authDomain: "refacciones-tq1.firebaseapp.com",
+  projectId: "refacciones-tq1",
+  storageBucket: "refacciones-tq1.firebasestorage.app",
+  messagingSenderId: "262273381525",
+  appId: "1:262273381525:web:ace0aa05348f982834179c"
+};
+// 2) PIN para ver el reporte y descargar el Excel
+const PIN_SUPERVISOR = "2580";
+// 3) Nombre de la colección en Firestore
+const COLECCION = "salidas_refacciones";
+/* ===================================================== */
+
+const DEMO = !firebaseConfig.apiKey || firebaseConfig.apiKey === "PEGA_AQUI";
+let db = null, datos = [];
+if (DEMO) { document.getElementById('demoBanner').classList.remove('hidden'); }
+else {
+  try{
+    firebase.initializeApp(firebaseConfig); db = firebase.firestore();
+    // Guarda en el celular si no hay señal y sincroniza solo cuando regresa
+    db.enablePersistence({synchronizeTabs:true}).catch(e=>console.warn('Sin modo offline:',e.code));
+  }catch(e){ console.error(e); }
+}
+/* Indicador de conexión */
+function estadoRed(){ const el=document.getElementById('red'); if(!el) return;
+  el.textContent = navigator.onLine ? '● En línea' : '● Sin señal — los registros se guardan y se envían al volver la señal';
+  el.style.color = navigator.onLine ? '#bfe8cf' : '#ffd27a'; }
+addEventListener('online',estadoRed); addEventListener('offline',estadoRed);
+document.addEventListener('DOMContentLoaded',estadoRed);
+
+const $ = id => document.getElementById(id);
+const ls = {get:(k,d)=>{try{return JSON.parse(localStorage.getItem(k))??d}catch(e){return d}},set:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+
+/* --- Recordar técnico y turno en el celular --- */
+$('tecnico').value = ls.get('tq1_tec','');
+$('turno').value = ls.get('tq1_turno','');
+function llenarListas(){
+  $('lTec').innerHTML = ls.get('tq1_tecs',[]).map(x=>`<option>${esc(x)}</option>`).join('');
+  $('lRef').innerHTML = ls.get('tq1_refs',[]).map(x=>`<option>${esc(x)}</option>`).join('');
+}
+function agregarLista(k,v){ if(!v) return; let a=ls.get(k,[]).filter(x=>x!==v); a.unshift(v); ls.set(k,a.slice(0,40)); }
+function esc(s){return String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+llenarListas(); pintarRecientes();
+
+/* --- Botones rápidos de "¿Dónde se utilizó?" --- */
+const MAQUINAS = ["Laminadora 1","Laminadora 2","Laminadora 3","Laminadora 4","Nave 1","Nave 2","Nave 3","Nave 4","Nave 5","Línea 1","Línea 2","Infraestructura","Laboratorio","Mantenimiento (fabricación)","Otra"];
+const TIPOS = ["Correctivo","Preventivo","Mejora","Reposición de stock"];
+function chips(cont, opciones, onPick){
+  const c=$(cont);
+  c.innerHTML=opciones.map(o=>`<button type="button">${esc(o)}</button>`).join('');
+  c.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    c.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on'); onPick(b.textContent);
+  });
+}
+chips('cMaq', MAQUINAS, v=>{
+  const otra = v==='Otra'; $('maquina').classList.toggle('hidden',!otra);
+  $('maquina').value = otra ? '' : v; if(otra) $('maquina').focus();
+});
+chips('cTipo', TIPOS, v=>$('tipo').value=v);
+function limpiarChips(){ ['cMaq','cTipo'].forEach(id=>$(id).querySelectorAll('button').forEach(b=>b.classList.remove('on')));
+  $('maquina').value=''; $('maquina').classList.add('hidden'); $('tipo').value=''; }
+
+function tab(t){
+  $('reg').classList.toggle('hidden',t!=='reg'); $('rep').classList.toggle('hidden',t!=='rep');
+  $('tReg').classList.toggle('on',t==='reg'); $('tRep').classList.toggle('on',t==='rep');
+}
+
+/* --- Guardar registro --- */
+$('f').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const r = {
+    tecnico:$('tecnico').value.trim(), turno:$('turno').value,
+    codigo:$('codigo').value.trim(), refaccion:$('refaccion').value.trim(),
+    cantidad:parseFloat($('cantidad').value), unidad:$('unidad').value,
+    maquina:$('maquina').value.trim(), tipo:$('tipo').value,
+    ot:$('ot').value.trim(), comentarios:$('coment').value.trim(),
+    ts: Date.now()
+  };
+  if(!r.maquina) return aviso('m','Indica en qué máquina o línea se usó',false);
+  if(!r.tipo) return aviso('m','Indica para qué se usó (correctivo, preventivo...)',false);
+  if(!r.tecnico||!r.refaccion||!r.turno||!(r.cantidad>0)) return aviso('m','Llena los campos con *',false);
+  $('bGuardar').disabled = true;
+  try{
+    if(DEMO){ const a=ls.get('tq1_demo',[]); r.id='d'+r.ts; a.push(r); ls.set('tq1_demo',a); }
+    else {
+      if(!db) throw new Error('Firebase no cargó');
+      // Se escribe primero en el celular (instantáneo) y Firebase lo sube en cuanto hay señal
+      const ref = db.collection(COLECCION).doc();
+      ref.set(r).catch(err=>{ console.error(err); aviso('m','El servidor rechazó el registro: '+err.message,false); });
+    }
+    ls.set('tq1_tec',r.tecnico); ls.set('tq1_turno',r.turno);
+    agregarLista('tq1_tecs',r.tecnico); agregarLista('tq1_refs',r.refaccion);
+    const mis = ls.get('tq1_mis',[]); mis.unshift(r); ls.set('tq1_mis',mis.slice(0,10));
+    ['codigo','refaccion','cantidad','ot','coment'].forEach(id=>$(id).value=''); limpiarChips();
+    llenarListas(); pintarRecientes();
+    aviso('m', navigator.onLine ? '✔ Salida registrada' : '✔ Guardada en el celular — se enviará cuando haya señal', true);
+  }catch(err){ aviso('m','No se pudo guardar. Revisa tu conexión e intenta de nuevo.',false); console.error(err); }
+  $('bGuardar').disabled = false;
+});
+function aviso(id,t,ok){ const m=$(id); m.textContent=t; m.className='msg '+(ok?'ok':'bad'); setTimeout(()=>m.className='msg',4000); }
+function fmt(ts){ const d=new Date(ts); return d.toLocaleDateString('es-MX')+' '+d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}); }
+function pintarRecientes(){
+  const a=ls.get('tq1_mis',[]); if(!a.length) return;
+  $('recent').innerHTML=a.map(r=>`<li><b>${esc(r.cantidad)} ${esc(r.unidad)}</b> ${esc(r.refaccion)} → ${esc(r.maquina)}<br><small style="color:var(--mut)">${fmt(r.ts)}</small></li>`).join('');
+}
+
+/* --- Reporte --- */
+function entrar(){
+  if($('pin').value!==PIN_SUPERVISOR) return aviso('mPin','PIN incorrecto',false);
+  $('pinCard').classList.add('hidden'); $('repBody').classList.remove('hidden');
+  const hoy=new Date(), ini=new Date(hoy.getFullYear(),hoy.getMonth(),1);
+  $('dDesde').value=iso(ini); $('dHasta').value=iso(hoy); cargar();
+}
+function iso(d){return new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)}
+async function cargar(){
+  const a=new Date($('dDesde').value+'T00:00:00').getTime(), b=new Date($('dHasta').value+'T23:59:59').getTime();
+  try{
+    if(DEMO) datos=ls.get('tq1_demo',[]).filter(r=>r.ts>=a&&r.ts<=b);
+    else{
+      const s=await db.collection(COLECCION).where('ts','>=',a).where('ts','<=',b).orderBy('ts','desc').limit(10000).get({source:'server'})
+        .catch(()=>db.collection(COLECCION).where('ts','>=',a).where('ts','<=',b).orderBy('ts','desc').limit(10000).get());
+      datos=s.docs.map(d=>({id:d.id,...d.data()}));
+    }
+    datos.sort((x,y)=>y.ts-x.ts); pintar();
+  }catch(err){ alert('Error al cargar: '+err.message); }
+}
+function filtrados(){
+  const q=$('filtro').value.toLowerCase().trim(); if(!q) return datos;
+  return datos.filter(r=>[r.tecnico,r.refaccion,r.maquina,r.codigo,r.tipo,r.comentarios,r.turno].join(' ').toLowerCase().includes(q));
+}
+function pintar(){
+  const f=filtrados();
+  $('sReg').textContent=f.length;
+  $('sTec').textContent=new Set(f.map(r=>r.tecnico.toLowerCase())).size;
+  $('sMaq').textContent=new Set(f.map(r=>r.maquina.toLowerCase())).size;
+  $('tbl').querySelector('tbody').innerHTML=f.map(r=>`<tr><td>${fmt(r.ts)}</td><td>${esc(r.tecnico)}</td><td>${esc(r.turno)}</td><td>${esc(r.codigo)}</td><td>${esc(r.refaccion)}</td><td>${esc(r.cantidad)} ${esc(r.unidad)}</td><td>${esc(r.maquina)}</td><td>${esc(r.tipo)}</td><td>${esc(r.comentarios)}</td></tr>`).join('')
+    || '<tr><td colspan="9" style="color:var(--mut)">Sin registros en este periodo.</td></tr>';
+}
+async function borrar(id){
+  if(!confirm('¿Borrar este registro?')) return;
+  if(DEMO) ls.set('tq1_demo',ls.get('tq1_demo',[]).filter(r=>r.id!==id));
+  else await db.collection(COLECCION).doc(id).delete();
+  cargar();
+}
+
+/* --- Excel --- */
+function excel(){
+  const f=filtrados(); if(!f.length) return alert('No hay registros para exportar.');
+  if(typeof XLSX==='undefined') return csv(f); // respaldo si la librería de Excel no cargó
+  const filas=f.map(r=>{const d=new Date(r.ts);return{
+    'Fecha':d.toLocaleDateString('es-MX'),'Hora':d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'}),
+    'Técnico':r.tecnico,'Turno':r.turno,'Código / No. parte':r.codigo,'Refacción':r.refaccion,
+    'Cantidad':r.cantidad,'Unidad':r.unidad,'Máquina / Línea':r.maquina,'Para qué':r.tipo,'Detalle':r.comentarios}});
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.json_to_sheet(filas);
+  ws['!cols']=[10,7,20,10,16,28,9,7,20,18,40].map(w=>({wch:w}));
+  ws['!autofilter']={ref:ws['!ref']};
+  XLSX.utils.book_append_sheet(wb,ws,'Salidas');
+  // Resumen por refacción
+  const res={}; f.forEach(r=>{const k=(r.codigo||'')+'|'+r.refaccion+'|'+r.unidad; res[k]=(res[k]||0)+r.cantidad;});
+  const ws2=XLSX.utils.json_to_sheet(Object.entries(res).map(([k,v])=>{const[c,n,u]=k.split('|');return{'Código':c,'Refacción':n,'Total salido':v,'Unidad':u}}).sort((a,b)=>b['Total salido']-a['Total salido']));
+  ws2['!cols']=[{wch:16},{wch:30},{wch:12},{wch:8}];
+  XLSX.utils.book_append_sheet(wb,ws2,'Resumen por refacción');
+  // Resumen por máquina
+  const rm={}; f.forEach(r=>{rm[r.maquina]=(rm[r.maquina]||0)+1;});
+  const ws3=XLSX.utils.json_to_sheet(Object.entries(rm).map(([m,n])=>({'Máquina / Línea':m,'Salidas':n})).sort((a,b)=>b.Salidas-a.Salidas));
+  ws3['!cols']=[{wch:24},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws3,'Resumen por máquina');
+  XLSX.writeFile(wb,`Salidas_Refacciones_${$('dDesde').value}_a_${$('dHasta').value}.xlsx`);
+}
+function csv(f){
+  const cols=['ts','tecnico','turno','codigo','refaccion','cantidad','unidad','maquina','tipo','comentarios'];
+  const head=['Fecha','Técnico','Turno','Código','Refacción','Cantidad','Unidad','Máquina','Para qué','Detalle'];
+  const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+  const txt='﻿'+head.join(',')+'\n'+f.map(r=>cols.map(c=>q(c==='ts'?fmt(r.ts):r[c])).join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([txt],{type:'text/csv'}));
+  a.download=`Salidas_Refacciones_${$('dDesde').value}_a_${$('dHasta').value}.csv`; a.click();
+}
+</script>
+</body>
+</html>
