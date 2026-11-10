@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero de Indicadores de Mantenimiento</title>
+<style>
+:root{
+  --bg:#0b1220;--panel:#121b2e;--panel2:#18233b;--line:#26345a;--tx:#e8eefc;--mut:#8fa3c8;
+  --ok:#22c55e;--warn:#f59e0b;--bad:#ef4444;--acc:#38bdf8;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:"Segoe UI",Roboto,Arial,sans-serif}
+body.tv{overflow:hidden;cursor:none}
+button,input,select,textarea{font:inherit}
+.loading{padding:3rem;text-align:center;color:var(--mut);font-size:1.4rem}
+
+/* ================= TABLERO ================= */
+.board{display:grid;grid-template-rows:auto 1.15fr 1fr;gap:.7vw;padding:.8vw;font-size:.92vw;width:100%;aspect-ratio:16/9}
+.board.full{height:100vh;aspect-ratio:auto}
+.bh{display:flex;align-items:center;gap:2vw;background:var(--panel);border:1px solid var(--line);border-radius:.6vw;padding:.6vw 1.2vw}
+.bt{font-size:2em;font-weight:700;letter-spacing:.02em}
+.bp{font-size:1.25em;color:var(--acc);font-weight:600}
+.bsum{margin-left:auto;text-align:right;font-size:1.2em;color:var(--mut)}
+.bsum b{color:var(--tx);font-size:1.5em}
+.bclock{text-align:right;min-width:12vw}
+#clk{font-size:2.2em;font-weight:700;font-variant-numeric:tabular-nums}
+.bupd{color:var(--mut);font-size:.95em}
+.bupd .live{color:var(--ok)}
+.cards{display:grid;gap:.7vw;min-height:0}
+.card{background:var(--panel);border:1px solid var(--line);border-top:.35vw solid var(--c,var(--line));border-radius:.6vw;padding:.7vw .9vw;display:flex;flex-direction:column;justify-content:space-between;min-height:0;overflow:hidden}
+.ok{--c:var(--ok)}.warn{--c:var(--warn)}.bad{--c:var(--bad)}
+.ch{display:flex;justify-content:space-between;align-items:flex-start;gap:.5vw}
+.cn{font-weight:700;font-size:1.2em;line-height:1.15}
+.tag{font-size:.8em;color:var(--mut);border:1px solid var(--line);border-radius:1vw;padding:.1vw .5vw;white-space:nowrap}
+.cbig{font-size:3.4em;font-weight:800;line-height:1;color:var(--c);font-variant-numeric:tabular-nums}
+.cbig small,.kv small{font-size:.38em;font-weight:600;color:var(--mut)}
+.cobj{color:var(--mut);font-size:1em}
+.bar{height:.55vw;background:var(--panel2);border-radius:1vw;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--c);border-radius:1vw}
+.crow{display:flex;justify-content:space-between;font-size:1.05em}
+.crow span{color:var(--mut)}
+.crow b.cc{color:var(--c)}
+.ctop{font-size:1em;background:var(--panel2);border-radius:.4vw;padding:.35vw .5vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lower{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:.7vw;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:.6vw;padding:.7vw .9vw;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.panel h3{margin:0 0 .5vw;font-size:1.25em;color:var(--mut);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.kgrp{flex:1;display:flex;flex-direction:column;min-height:0}
+.kgrp+.kgrp{margin-top:.6vw}
+.kgt{font-weight:700;font-size:1.15em;margin-bottom:.3vw}
+.kgt span{color:var(--mut);font-weight:400;font-size:.85em;margin-left:.5vw}
+.kpair{display:grid;grid-template-columns:1fr 1fr;gap:.6vw;flex:1;min-height:0}
+.kpi{background:var(--panel2);border-left:.35vw solid var(--c);border-radius:.4vw;padding:.4vw .7vw;display:flex;flex-direction:column;justify-content:center}
+.kl{color:var(--mut);font-weight:600}
+.kv{font-size:2.4em;font-weight:800;color:var(--c);line-height:1.05;font-variant-numeric:tabular-nums}
+.ko{color:var(--mut);font-size:.95em}
+.kc{font-size:1em}
+.kc b{color:var(--c)}
+.pg{flex:1;min-height:0}
+.pg+.pg{margin-top:.5vw}
+.pgt{font-weight:700;margin-bottom:.25vw;font-size:1.05em}
+.pr{display:grid;grid-template-columns:38% 1fr auto;align-items:center;gap:.5vw;margin:.22vw 0;font-size:1em}
+.pl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar{height:1vw;background:var(--panel2);border-radius:.3vw;overflow:hidden}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,#f97316,#ef4444);border-radius:.3vw}
+.pv{color:var(--mut);white-space:nowrap;font-variant-numeric:tabular-nums}
+.pv b{color:var(--tx)}
+.empty{color:var(--mut);font-style:italic;padding:.3vw 0}
+.trend{flex:1;min-height:0}
+.trend svg{width:100%;height:100%}
+.legend{display:flex;gap:1vw;color:var(--mut);font-size:.9em;margin-top:.2vw}
+.legend i{display:inline-block;width:.8vw;height:.8vw;border-radius:.15vw;margin-right:.3vw;vertical-align:middle}
+
+/* ================= ADMIN ================= */
+.admin{min-height:100vh}
+nav.top{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;padding:.7rem 1rem;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.brand{font-weight:700;margin-right:1rem}
+.btn,nav.top button{background:var(--panel2);color:var(--tx);border:1px solid var(--line);border-radius:.45rem;padding:.45rem .85rem;cursor:pointer;text-decoration:none;font-size:.95rem}
+.btn:hover,nav.top button:hover{border-color:var(--acc)}
+.btn.on,nav.top button.on{background:var(--acc);color:#04121f;border-color:var(--acc);font-weight:700}
+.btn.pri{background:var(--acc);color:#04121f;border-color:var(--acc);font-weight:700}
+.btn.dan{border-color:#7f1d1d;color:#fca5a5}
+.btn.sm{padding:.2rem .55rem;font-size:.85rem}
+.sp{flex:1}
+.who{color:var(--mut);font-size:.9rem;display:flex;gap:.5rem;align-items:center}
+.demo{background:#3b2a05;border-bottom:1px solid #8a6411;color:#fde68a;padding:.5rem 1rem;font-size:.9rem}
+.pctl{display:flex;gap:.6rem;align-items:center;padding:.8rem 1rem 0;color:var(--mut);flex-wrap:wrap}
+main{padding:1rem}
+input,select,textarea{background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:.4rem;padding:.45rem .55rem}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--acc);border-color:transparent}
+.grid2{display:grid;grid-template-columns:minmax(300px,380px) 1fr;gap:1rem;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.pa{background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:1rem}
+.pa h3{margin:0 0 .8rem}
+.f{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.7rem}
+.f label{color:var(--mut);font-size:.85rem}
+.f2{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.f2 input,.f2 select{width:100%;min-width:0}
+.msg{margin-left:.6rem;font-size:.9rem}
+.msg.okm{color:var(--ok)}.msg.errm{color:var(--bad)}
+.th{display:flex;justify-content:space-between;align-items:center;margin-bottom:.6rem;gap:.5rem;flex-wrap:wrap}
+.th h3{margin:0}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{border-bottom:1px solid var(--line);padding:.45rem .4rem;text-align:left;vertical-align:top}
+th{color:var(--mut);font-weight:600;position:sticky;top:0;background:var(--panel)}
+.tw{max-height:70vh;overflow:auto}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+.cfg section{background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:1rem;margin-bottom:1rem}
+.cfg h3{margin:0 0 .3rem}
+.cfg p.h{color:var(--mut);margin:.1rem 0 .8rem;font-size:.9rem}
+.cfg table input,.cfg table select{width:100%}
+.cfg textarea{width:100%;min-height:9rem}
+.dias{display:flex;gap:.8rem;flex-wrap:wrap}
+.dias label{display:flex;gap:.3rem;align-items:center}
+.gcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.gcard{background:var(--panel2);border:1px solid var(--line);border-radius:.5rem;padding:.8rem}
+.savebar{position:sticky;bottom:0;background:var(--panel);border:1px solid var(--line);border-radius:.6rem;padding:.8rem 1rem;display:flex;gap:.6rem;align-items:center}
+.login{max-width:360px;margin:3rem auto}
+.toast{position:fixed;right:1rem;bottom:1rem;background:#7f1d1d;color:#fff;padding:.7rem 1rem;border-radius:.5rem;max-width:420px;z-index:99;font-size:.9rem}
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">Cargando tablero…</div></div>
+
+<script type="module">
+/* =====================================================================
+   1) PEGA AQUÍ LA CONFIGURACIÓN DE TU PROYECTO FIREBASE
+      (Consola Firebase → ⚙ Configuración del proyecto → Tus apps → Web)
+   Si apiKey se queda vacío, la página funciona en MODO DEMO
+   (datos de ejemplo guardados solo en este navegador).
+   ===================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyCtSzwXTqFnOpVdzum016bgX5W7QBIeDhk",
+  authDomain: "tablero-de-mtto.firebaseapp.com",
+  projectId: "tablero-de-mtto",
+  storageBucket: "tablero-de-mtto.firebasestorage.app",
+  messagingSenderId: "297322830102",
+  appId: "1:297322830102:web:7506d441ac53421d581837"
+};
+
+/* ===== Configuración inicial (después todo se cambia desde la página) ===== */
+const DEFAULT_CFG = {
+  titulo: "Indicadores de Mantenimiento",
+  periodoTablero: "mes",              // "mes" o "dia"
+  diasLaborales: [1,2,3,4,5,6],       // 0=Dom, 1=Lun ... 6=Sáb
+  grupos: [
+    { nombre:"Moldeo", objMTTR:45, objMTBF:40,
+      fallas:["Hidráulica","Cabezal de mezcla","Dosificación / bombas","Molde / porta-molde","Temperatura / atemperado","Eléctrica","Sensores","PLC / control","Neumática","Robot / manipulador","Otro"] },
+    { nombre:"Laminado", objMTTR:30, objMTBF:60,
+      fallas:["A-1 Quemador y gas","A-2 Rodillos de laminado","A-3 Enfriamiento (agua)","B-1 Desembobinado / alimentación","B-2 Acumuladora","B-3 Embobinado","C-1 Bandas transportadoras","C-2 Guiado / alineación de material","D-1 Servos y variadores","D-2 PLC, sensores y tablero","E-1 Neumático / aire comprimido","E-2 Hidráulico","F Resistencias / calentamiento","G Extracción de humos","H Servicios de planta","L Otros"] }
+  ],
+  areas: [
+    { id:"mol-lg", nombre:"Moldeo N1 · Línea Grande",  grupo:"Moldeo",   objIdx:1.5, horasDia:0 },
+    { id:"mol-lp", nombre:"Moldeo N1 · Línea Pequeña", grupo:"Moldeo",   objIdx:1.5, horasDia:0 },
+    { id:"lam-1",  nombre:"Laminadora 1 · Nave 1",     grupo:"Laminado", objIdx:1.5, horasDia:0 },
+    { id:"lam-2",  nombre:"Laminadora 2 · Nave 2",     grupo:"Laminado", objIdx:1.5, horasDia:0 },
+    { id:"lam-3",  nombre:"Laminadora 3 · Nave 4",     grupo:"Laminado", objIdx:1.5, horasDia:0 },
+    { id:"lam-4",  nombre:"Laminadora 4 · Nave 4",     grupo:"Laminado", objIdx:1.5, horasDia:0 }
+  ],
+  tecnicos: ["Josue L","Alberto","Saul","Giovani","Antonio Garrido","Miguel","Luis Martinez","Carlos","Daniel","Alejandro"]
+};
+
+/* ========================= utilidades ========================= */
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DIAS_L=["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+const DIAS_C=["dom","lun","mar","mié","jue","vie","sáb"];
+const pad=n=>String(n).padStart(2,"0");
+const ymd=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=s=>{const[y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)};
+const hoy=()=>ymd(new Date());
+const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=n=>Math.round(n||0).toLocaleString("es-MX");
+const fmt1=n=>(Math.round((n||0)*10)/10).toLocaleString("es-MX");
+const fmt2=n=>(n||0).toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
+const clone=o=>JSON.parse(JSON.stringify(o));
+const sem=c=>c>=100?"ok":c>=85?"warn":"bad";
+const $=s=>document.querySelector(s);
+function toast(t){const d=document.createElement("div");d.className="toast";d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),7000)}
+function normCfg(c){
+  const b=clone(DEFAULT_CFG); if(!c) return b;
+  const r={...b,...c};
+  for(const k of ["grupos","areas","tecnicos","diasLaborales"]) if(!Array.isArray(r[k])) r[k]=b[k];
+  r.grupos=r.grupos.map(g=>({nombre:"",objMTTR:0,objMTBF:0,fallas:[],...g}));
+  r.areas=r.areas.map(a=>({horasDia:0,...a,objIdx:a.objIdx??1.5}));
+  return r;
+}
+
+/* ========================= almacenamiento ========================= */
+function demoStore(){
+  const KC="tb_demo_cfg",KP="tb_demo_paros",KD="tb_demo_dias";
+  const rd=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d}catch{return d}};
+  const wr=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+  const cl=new Set(),pl=new Set();
+  const eC=()=>cl.forEach(f=>f()),eP=()=>pl.forEach(f=>f());
+  addEventListener("storage",e=>{if(e.key===KC)eC();if(e.key===KP||e.key===KD)eP()});
+  if(rd(KD,null)===null){const sd=seedDemo();wr(KP,sd.paros);wr(KD,sd.dias)}
+  return {
+    demo:true,
+    onAuth(cb){cb({email:"demo"})},
+    async login(){},async logout(){},
+    subConfig(cb){const f=()=>cb(rd(KC,null));cl.add(f);f();return()=>cl.delete(f)},
+    async saveConfig(c){wr(KC,c);eC()},
+    subParos(a,b,cb){const f=()=>cb(rd(KP,[]).filter(p=>p.fecha>=a&&p.fecha<=b));pl.add(f);f();return()=>pl.delete(f)},
+    subDias(a,b,cb){const f=()=>cb(rd(KD,[]).filter(p=>p.fecha>=a&&p.fecha<=b));pl.add(f);f();return()=>pl.delete(f)},
+    async addParo(p){const l=rd(KP,[]);l.push({...p,origen:"manual",id:"d"+Date.now()+Math.random().toString(36).slice(2,6),creado:Date.now()});wr(KP,l);eP()},
+    async updParo(id,p){wr(KP,rd(KP,[]).map(x=>x.id===id?{...x,...p}:x));eP()},
+    async delParo(id){wr(KP,rd(KP,[]).filter(x=>x.id!==id));eP()},
+    async resetDemo(){wr(KP,[]);wr(KD,[]);eP()}
+  };
+}
+function seedDemo(){
+  const paros=[],dias=[],c=DEFAULT_CFG,t=new Date(),s=new Date(t.getFullYear(),t.getMonth(),1);
+  let id=0;
+  for(let d=new Date(s);d<=t;d.setDate(d.getDate()+1)){
+    if(d.getDay()===0||d.getDay()===6) continue;
+    for(const a of c.areas){
+      const g=c.grupos.find(x=>x.nombre===a.grupo),prog=990,prep=250+Math.round(Math.random()*200);
+      dias.push({id:"x_"+a.id+"_"+ymd(d),areaId:a.id,fecha:ymd(d),prog,prep,prod:prog-prep,meta:1.5,origen:"excel"});
+      for(const tn of["T1","T2"]){
+        if(Math.random()>.22)continue;
+        const idx=Math.min(g.fallas.length-1,Math.floor(Math.pow(Math.random(),2.2)*g.fallas.length));
+        paros.push({id:"x_"+a.id+"_"+ymd(d)+"_"+tn,fecha:ymd(d),areaId:a.id,turno:tn,falla:g.fallas[idx],minutos:5+Math.round(Math.random()*25),
+          inicio:"",fin:"",tecnico:"",descripcion:"(dato de ejemplo)",origen:"excel",creado:id++});
+      }
+    }
+  }
+  return{paros,dias};
+}
+async function firebaseStore(){
+  const B="https://www.gstatic.com/firebasejs/10.12.2/";
+  const [AP,F]=await Promise.all([import(B+"firebase-app.js"),import(B+"firebase-firestore.js")]);
+  const app=AP.initializeApp(FIREBASE_CONFIG),db=F.initializeFirestore(app,{experimentalAutoDetectLongPolling:true});
+  const col=F.collection(db,"tablero_paros"),cfgRef=F.doc(db,"tablero","config");
+  const err=e=>toast("Error de Firebase: "+(e.code||e.message)+(e.code==="permission-denied"?" — revisa las reglas de Firestore.":""));
+  return {
+    demo:false,
+    onAuth:cb=>cb({email:"Acceso libre"}),   // sin correo ni contraseña
+    login:async()=>{},logout:async()=>{},
+    subConfig:cb=>F.onSnapshot(cfgRef,s=>cb(s.exists()?s.data():null),e=>{err(e);cb(null)}),
+    saveConfig:c=>F.setDoc(cfgRef,c),
+    subParos:(a,b,cb)=>F.onSnapshot(F.query(col,F.where("fecha",">=",a),F.where("fecha","<=",b)),
+      s=>cb(s.docs.map(d=>{const x=d.data();return{...x,id:d.id,creado:x.creado?.toMillis?.()||0}})),err),
+    subDias:(a,b,cb)=>F.onSnapshot(F.query(F.collection(db,"tablero_dias"),F.where("fecha",">=",a),F.where("fecha","<=",b)),
+      s=>cb(s.docs.map(d=>({...d.data(),id:d.id}))),err),
+    addParo:p=>F.addDoc(col,{...p,origen:"manual",creado:F.serverTimestamp()}),
+    updParo:(id,p)=>F.updateDoc(F.doc(db,"tablero_paros",id),p),
+    delParo:id=>F.deleteDoc(F.doc(db,"tablero_paros",id))
+  };
+}
+
+/* ========================= cálculos ========================= */
+function rango(per,ref){
+  const r=parse(ref),h=hoy();
+  if(per==="dia"){
+    const s=new Date(r);s.setDate(s.getDate()-6);
+    const trend=[];for(let d=new Date(s);d<=r;d.setDate(d.getDate()+1))trend.push(ymd(d));
+    return{per,kpiStart:ref,kpiEnd:ref,subStart:ymd(s),subEnd:ref,trend,
+      label:`${DIAS_L[r.getDay()]} ${r.getDate()} de ${MESES[r.getMonth()]} ${r.getFullYear()}`};
+  }
+  const s=new Date(r.getFullYear(),r.getMonth(),1),e=new Date(r.getFullYear(),r.getMonth()+1,0);
+  const sS=ymd(s),eS=ymd(e),enCurso=h>=sS&&h<=eS;
+  const trend=[];for(let d=new Date(s);d<=e;d.setDate(d.getDate()+1))trend.push(ymd(d));
+  return{per,kpiStart:sS,kpiEnd:enCurso?h:eS,subStart:sS,subEnd:eS,trend,
+    label:`${cap(MESES[r.getMonth()])} ${r.getFullYear()}`+(enCurso?` · acumulado al día ${parse(h).getDate()}`:"")};
+}
+function diasLab(a,b,dl){let n=0;for(let d=parse(a),e=parse(b);d<=e;d.setDate(d.getDate()+1))if(dl.includes(d.getDay()))n++;return n}
+function paretoDe(ps){
+  const m=new Map();
+  for(const p of ps){const k=p.falla||"Sin clasificar";const o=m.get(k)||{falla:k,min:0,n:0};o.min+=+p.minutos||0;o.n++;m.set(k,o)}
+  return[...m.values()].sort((a,b)=>b.min-a.min||b.n-a.n);
+}
+function calc(cfg,paros,dias,rg){
+  const inK=x=>x.fecha>=rg.kpiStart&&x.fecha<=rg.kpiEnd,sum=(l,f)=>l.reduce((s,x)=>s+(+f(x)||0),0);
+  const enK=paros.filter(inK),dK=dias.filter(inK);
+  const dl=Math.max(1,diasLab(rg.kpiStart,rg.kpiEnd,cfg.diasLaborales));
+  const conExcel=new Set(dias.map(d=>d.areaId));   // áreas que mandan datos desde su Excel
+  const areas=cfg.areas.map(a=>{
+    const ps=enK.filter(p=>p.areaId===a.id),ds=dK.filter(d=>d.areaId===a.id);
+    const tm=sum(ps,p=>p.minutos),n=ps.length,excel=conExcel.has(a.id);
+    const prod=excel?sum(ds,d=>d.prod):(+a.horasDia||0)*60*dl;
+    const mD=ds.filter(d=>+d.meta>0).sort((x,y)=>x.fecha.localeCompare(y.fecha)).pop();
+    const meta=mD?+mD.meta:(+a.objIdx||0);
+    const idx=prod>0?tm/prod*100:0,obj=meta/100*prod;
+    const cumpl=idx<=meta?100:(idx>0?meta/idx*100:100);
+    const uso=meta>0?idx/meta*100:(tm>0?100:0);
+    return{...a,ps,tm,n,prod,meta,idx,obj,cumpl,uso,excel,sinDatos:prod<=0,top:paretoDe(ps)[0]};
+  });
+  const grupos=cfg.grupos.map(g=>{
+    const as=areas.filter(a=>a.grupo===g.nombre),ps=as.flatMap(a=>a.ps);
+    const tm=sum(as,a=>a.tm),n=sum(as,a=>a.n),prod=sum(as,a=>a.prod);
+    const mttr=n?tm/n:0,mtbf=n?Math.max(0,prod-tm)/60/n:prod/60;
+    const cMTTR=!n||mttr===0?100:Math.min(100,(+g.objMTTR||0)/mttr*100);
+    const cMTBF=!(+g.objMTBF)||prod<=0?100:Math.min(100,mtbf/g.objMTBF*100);
+    return{...g,tm,n,prod,mttr,mtbf,cMTTR,cMTBF,pareto:paretoDe(ps)};
+  });
+  const tm=sum(areas,a=>a.tm),prod=sum(areas,a=>a.prod),obj=sum(areas,a=>a.obj);
+  const meta=prod>0?obj/prod*100:(areas.length?sum(areas,a=>a.meta)/areas.length:0);
+  const h=hoy();
+  const trend=rg.trend.map(f=>{
+    const lab=cfg.diasLaborales.includes(parse(f).getDay());
+    const tmD=sum(paros.filter(p=>p.fecha===f),p=>p.minutos);
+    const prodD=cfg.areas.reduce((s,a)=>s+(conExcel.has(a.id)?sum(dias.filter(d=>d.fecha===f&&d.areaId===a.id),d=>d.prod):(lab?(+a.horasDia||0)*60:0)),0);
+    return{f,min:tmD,prod:prodD,idx:prodD>0?tmD/prodD*100:null,lab,fut:f>h};
+  });
+  return{areas,grupos,trend,tm,prod,obj,meta,idx:prod>0?tm/prod*100:0,n:enK.length};
+}
+
+/* ========================= estado ========================= */
+const P=new URLSearchParams(location.search);
+const S={tv:P.has("tv"),view:location.hash.slice(1)||"tablero",periodo:P.get("periodo"),ref:hoy(),
+  cfg:null,paros:[],dias:[],user:null,store:null,unsub:null,subKey:"",lastUpd:null,editId:null,cfgEdit:null};
+if(S.tv)document.body.classList.add("tv");
+
+/* ========================= tablero ========================= */
+function boardHTML(){
+  const cfg=S.cfg,rg=rango(S.periodo,S.ref),K=calc(cfg,S.paros,S.dias,rg);
+  const nA=cfg.areas.length,cols=nA<=6?Math.max(1,nA):Math.ceil(nA/2);
+  const cards=K.areas.map(a=>{
+    if(a.sinDatos)return`<div class="card"><div class="ch"><span class="cn">${esc(a.nombre)}</span><span class="tag">${esc(a.grupo)}</span></div>
+      <div class="cbig" style="color:var(--mut)">—</div><div class="cobj">Sin datos de producción en este periodo</div>
+      <div class="crow"><span>Paro por falla</span><b>${fmt(a.tm)} min</b></div><div class="crow"><span>Fallas</span><b>${a.n}</b></div>
+      <div class="ctop">${a.top?`⚠ <b>${esc(a.top.falla)}</b> ${fmt(a.top.min)} min`:"Esperando datos del Excel"}</div></div>`;
+    const st=sem(a.cumpl);
+    return`<div class="card ${st}">
+      <div class="ch"><span class="cn">${esc(a.nombre)}</span><span class="tag">${esc(a.grupo)}</span></div>
+      <div class="cbig">${fmt2(a.idx)}<small> %</small></div>
+      <div class="cobj">Índice de tiempo muerto · meta ≤ ${fmt2(a.meta)} %</div>
+      <div class="bar"><i style="width:${Math.min(100,a.uso)}%"></i></div>
+      <div class="crow"><span>Paro por falla</span><b>${fmt(a.tm)} / ${fmt(a.obj)} min</b></div>
+      <div class="crow"><span>Cumplimiento</span><b class="cc">${Math.round(a.cumpl)}%</b></div>
+      <div class="crow"><span>Fallas</span><b>${a.n}</b></div>
+      <div class="crow"><span>T. producción${a.excel?"":" (estim.)"}</span><b>${fmt1(a.prod/60)} h</b></div>
+      <div class="ctop" title="${esc(a.top?.falla)}">${a.top?`⚠ <b>${esc(a.top.falla)}</b> ${fmt(a.top.min)} min`:"✓ Sin fallas"}</div>
+    </div>`}).join("");
+  const kt=(l,v,u,o,c)=>`<div class="kpi ${sem(c)}"><div class="kl">${l}</div><div class="kv">${v}<small> ${u}</small></div><div class="ko">${o}</div><div class="kc">Cumplimiento <b>${Math.round(c)}%</b></div></div>`;
+  const kpis=K.grupos.map(g=>`<div class="kgrp"><div class="kgt">${esc(g.nombre)}<span>${g.n} fallas · ${fmt(g.tm)} min</span></div>
+    <div class="kpair">${kt("MTTR (tiempo medio de reparación)",g.n?fmt1(g.mttr):"—","min",`Objetivo ≤ ${fmt1(g.objMTTR)} min`,g.cMTTR)}
+    ${kt("MTBF (tiempo medio entre fallas)",g.prod<=0?"—":(g.n?"":"≥")+fmt1(g.mtbf),"h",`Objetivo ≥ ${fmt1(g.objMTBF)} h`,g.cMTBF)}</div></div>`).join("")||`<div class="empty">Sin grupos configurados</div>`;
+  const per=Math.max(3,Math.floor(10/Math.max(1,K.grupos.length)));
+  const par=K.grupos.map(g=>{const l=g.pareto.slice(0,per),mx=l[0]?.min||1;
+    return`<div class="pg"><div class="pgt">${esc(g.nombre)}</div>${l.length?l.map(f=>`<div class="pr"><span class="pl" title="${esc(f.falla)}">${esc(f.falla)}</span><span class="pbar"><i style="width:${f.min/mx*100}%"></i></span><span class="pv"><b>${fmt(f.min)}</b> min · ${f.n}×</span></div>`).join(""):`<div class="empty">Sin paros registrados</div>`}</div>`}).join("");
+  const upd=S.lastUpd?`${pad(S.lastUpd.getHours())}:${pad(S.lastUpd.getMinutes())}`:"--:--";
+  const gs=K.idx<=K.meta?"ok":(K.idx<=K.meta*1.15?"warn":"bad");
+  return`<div class="board ${S.tv?"full":""}">
+    <header class="bh"><div><div class="bt">${esc(cfg.titulo)}</div><div class="bp">${esc(rg.label)}</div></div>
+      <div class="bsum ${gs}">Índice general de tiempo muerto<br><b style="color:var(--c)">${fmt2(K.idx)} %</b> / meta ${fmt2(K.meta)} % · ${fmt(K.tm)} min · ${K.n} fallas</div>
+      <div class="bclock"><div id="clk">${reloj()}</div><div class="bupd">${S.store.demo?"MODO DEMO":`<span class="live">●</span> En vivo`} · act. ${upd}</div></div></header>
+    <section class="cards" style="grid-template-columns:repeat(${cols},1fr)">${cards||`<div class="card"><div class="empty">Agrega áreas en Configuración</div></div>`}</section>
+    <section class="lower">
+      <div class="panel"><h3>MTTR / MTBF</h3>${kpis}</div>
+      <div class="panel"><h3>Causas más comunes (minutos)</h3>${par}</div>
+      <div class="panel"><h3>Índice de tiempo muerto por día ${rg.per==="dia"?"(últimos 7 días)":""}</h3><div class="trend">${trendSVG(K,rg)}</div>
+        <div class="legend"><span><i style="background:var(--ok)"></i>Dentro de meta</span><span><i style="background:var(--bad)"></i>Arriba de meta</span><span><i style="background:none;border-top:2px dashed var(--warn);height:0"></i>Meta</span></div></div>
+    </section></div>`;
+}
+function trendSVG(K,rg){
+  const d=K.trend,W=600,H=260,pl=46,pr=10,pt=12,pb=24,ih=H-pt-pb;
+  const mx=Math.max(K.meta*2,...d.map(x=>x.idx||0),0.5);
+  const bw=(W-pl-pr)/d.length,y=v=>H-pb-v/mx*ih;
+  let s=`<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" font-family="Segoe UI,Arial" font-size="15">`;
+  for(const t of[0,mx/2,mx]){s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(t)}" y2="${y(t)}" stroke="#26345a"/><text x="${pl-6}" y="${y(t)+5}" fill="#8fa3c8" text-anchor="end">${fmt1(t)}%</text>`}
+  const step=d.length>20?3:d.length>12?2:1;
+  d.forEach((x,i)=>{
+    const cx=pl+i*bw;
+    if(!x.fut&&x.idx>0){const c=x.idx>K.meta?"#ef4444":"#22c55e";s+=`<rect x="${cx+bw*.15}" y="${y(x.idx)}" width="${bw*.7}" height="${H-pb-y(x.idx)}" rx="2" fill="${c}"><title>${x.f}: ${fmt2(x.idx)} % (${fmt(x.min)} min)</title></rect>`}
+    else if(!x.prod&&!x.fut){s+=`<rect x="${cx+bw*.15}" y="${pt}" width="${bw*.7}" height="${ih}" fill="#18233b"/>`}
+    if(i%step===0){const dt=parse(x.f);s+=`<text x="${cx+bw/2}" y="${H-7}" fill="#8fa3c8" text-anchor="middle">${rg.per==="dia"?DIAS_C[dt.getDay()]+" "+dt.getDate():dt.getDate()}</text>`}
+  });
+  if(K.meta>0)s+=`<line x1="${pl}" x2="${W-pr}" y1="${y(K.meta)}" y2="${y(K.meta)}" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6 4"/><text x="${W-pr}" y="${y(K.meta)-5}" fill="#f59e0b" text-anchor="end">Meta ${fmt2(K.meta)} %</text>`;
+  return s+"</svg>";
+}
+const reloj=()=>{const d=new Date();return`${pad(d.getHours())}:${pad(d.getMinutes())}`};
+
+/* ========================= render ========================= */
+function needLogin(){return!S.store.demo&&!S.user&&(S.view==="registro"||S.view==="config")}
+function renderShell(){
+  if(!S.cfg||!S.store)return;
+  if(S.tv){$("#app").innerHTML=`<div id="board"></div>`;renderData();return}
+  const v=S.view,b=(k,t)=>`<button data-act="view" data-v="${k}" class="${v===k?"on":""}">${t}</button>`;
+  const who=S.store.demo?"Modo demo":S.user?esc(S.user.email):"Solo lectura";
+  const showP=v==="tablero"||v==="registro";
+  const refVal=S.periodo==="mes"?S.ref.slice(0,7):S.ref;
+  $("#app").innerHTML=`<div class="admin">
+    <nav class="top"><span class="brand">📊 Tablero de Mantenimiento</span>${b("tablero","Tablero")}${b("registro","Registrar paros")}${b("config","Objetivos y configuración")}
+      <a class="btn" href="?tv=1" target="_blank">Abrir modo TV ↗</a><span class="sp"></span><span class="who">${who}</span></nav>
+    ${S.store.demo?`<div class="demo">⚠ MODO DEMO: datos de ejemplo guardados solo en este navegador. Para usarlo desde cualquier computadora pega la configuración de Firebase al inicio del archivo.</div>`:""}
+    ${showP?`<div class="pctl">Ver periodo:
+      <select id="selPer"><option value="mes" ${S.periodo==="mes"?"selected":""}>Mes</option><option value="dia" ${S.periodo==="dia"?"selected":""}>Día</option></select>
+      <input id="inRef" type="${S.periodo==="mes"?"month":"date"}" value="${refVal}"><button class="btn sm" data-act="hoy">Hoy</button>
+      <span style="font-size:.85rem">(La TV usa el periodo definido en Configuración)</span></div>`:""}
+    <main id="main"></main></div>`;
+  const m=$("#main");
+  if(needLogin()){m.innerHTML=loginHTML();return}
+  if(v==="tablero")m.innerHTML=`<div id="board"></div>`;
+  else if(v==="registro"){m.innerHTML=registroHTML();fillFormOpts();resetForm()}
+  else if(v==="config"){S.cfgEdit=clone(S.cfg);m.innerHTML=`<div id="cfgw"></div>`;renderCfg()}
+  renderData();
+}
+function renderData(){
+  if(!S.cfg)return;
+  const bd=$("#board");if(bd)bd.innerHTML=boardHTML();
+  const tb=$("#tbl");if(tb)tb.innerHTML=tablaHTML();
+}
+
+/* ---------- login ---------- */
+function loginHTML(){return`<form id="fLogin" class="pa login"><h3>Iniciar sesión</h3>
+  <p style="color:var(--mut);font-size:.9rem;margin-top:0">Para capturar paros o cambiar objetivos.</p>
+  <div class="f"><label>Correo</label><input name="e" type="email" required autocomplete="username"></div>
+  <div class="f"><label>Contraseña</label><input name="p" type="password" required autocomplete="current-password"></div>
+  <button class="btn pri">Entrar</button><span class="msg" id="lmsg"></span></form>`}
+
+/* ---------- registro de paros ---------- */
+function registroHTML(){
+  return`<div class="grid2">
+  <form id="fParo" class="pa" autocomplete="off"><h3 id="fTit">Registrar paro / falla</h3>
+    <div class="f"><label>Fecha</label><input name="fecha" type="date" required></div>
+    <div class="f"><label>Área / máquina</label><select name="areaId" required></select></div>
+    <div class="f"><label>Falla</label><select name="falla" required></select></div>
+    <div class="f" id="otraW" hidden><label>Escribe la falla</label><input name="otra" placeholder="Se agregará al catálogo"></div>
+    <div class="f2">
+      <div class="f"><label>Inicio</label><input name="inicio" type="time"></div>
+      <div class="f"><label>Fin</label><input name="fin" type="time"></div>
+      <div class="f"><label>Minutos *</label><input name="minutos" type="number" min="1" step="1" required></div>
+    </div>
+    <div class="f"><label>Técnico</label><input name="tecnico" list="dlTec"><datalist id="dlTec"></datalist></div>
+    <div class="f"><label>Descripción / acción realizada</label><textarea name="descripcion" rows="3"></textarea></div>
+    <button class="btn pri" id="bSave">Guardar</button> <button type="button" class="btn" id="bCancel" data-act="cancelEdit" hidden>Cancelar edición</button>
+    <span class="msg" id="fmsg"></span>
+  </form>
+  <div class="pa"><div class="th"><h3>Paros del periodo</h3><button class="btn sm" data-act="csv">Exportar CSV (Excel)</button></div><div id="tbl" class="tw"></div></div></div>`;
+}
+function fillFormOpts(){
+  const f=$("#fParo");if(!f)return;
+  const aSel=f.areaId,cur=aSel.value;
+  aSel.innerHTML=S.cfg.areas.map(a=>`<option value="${esc(a.id)}">${esc(a.nombre)}</option>`).join("");
+  if(cur&&S.cfg.areas.some(a=>a.id===cur))aSel.value=cur;
+  fillFallas();
+  $("#dlTec").innerHTML=S.cfg.tecnicos.map(t=>`<option value="${esc(t)}">`).join("");
+}
+function fillFallas(sel){
+  const f=$("#fParo"),a=S.cfg.areas.find(x=>x.id===f.areaId.value),g=S.cfg.grupos.find(x=>x.nombre===a?.grupo);
+  const list=g?.fallas||[],cur=sel??f.falla.value;
+  f.falla.innerHTML=`<option value="">— Selecciona —</option>`+list.map(x=>`<option>${esc(x)}</option>`).join("")+`<option value="__otra">+ Otra (escribir)…</option>`;
+  if(cur&&list.includes(cur))f.falla.value=cur;
+  else if(cur&&cur!=="__otra"){f.falla.value="__otra";f.otra.value=cur}
+  $("#otraW").hidden=f.falla.value!=="__otra";
+}
+function resetForm(keep){
+  const f=$("#fParo");if(!f)return;
+  const fecha=keep?f.fecha.value:(S.periodo==="dia"?S.ref:hoy()),area=f.areaId.value;
+  f.reset();f.fecha.value=fecha;if(keep&&area)f.areaId.value=area;fillFallas("");
+  S.editId=null;$("#fTit").textContent="Registrar paro / falla";$("#bSave").textContent="Guardar";$("#bCancel").hidden=true;
+}
+function calcMin(){
+  const f=$("#fParo");if(!f.inicio.value||!f.fin.value)return;
+  const[a,b]=[f.inicio.value,f.fin.value].map(t=>{const[h,m]=t.split(":").map(Number);return h*60+m});
+  let d=b-a;if(d<0)d+=1440;f.minutos.value=d;
+}
+async function saveParo(e){
+  e.preventDefault();const f=e.target,msg=$("#fmsg");
+  let falla=f.falla.value;
+  if(falla==="__otra"){falla=f.otra.value.trim();if(!falla){msg.className="msg errm";msg.textContent="Escribe la falla";return}}
+  const p={fecha:f.fecha.value,areaId:f.areaId.value,falla,minutos:Number(f.minutos.value),inicio:f.inicio.value,fin:f.fin.value,
+    tecnico:f.tecnico.value.trim(),descripcion:f.descripcion.value.trim()};
+  if(!p.fecha||!p.areaId||!p.falla||!(p.minutos>0)){msg.className="msg errm";msg.textContent="Completa fecha, área, falla y minutos";return}
+  try{
+    // si es falla nueva, agregarla al catálogo del grupo
+    const a=S.cfg.areas.find(x=>x.id===p.areaId),g=S.cfg.grupos.find(x=>x.nombre===a?.grupo);
+    if(g&&!g.fallas.includes(falla)){const c=clone(S.cfg);c.grupos.find(x=>x.nombre===g.nombre).fallas.splice(Math.max(0,g.fallas.length-1),0,falla);await S.store.saveConfig(c)}
+    if(S.editId)await S.store.updParo(S.editId,p);else await S.store.addParo(p);
+    msg.className="msg okm";msg.textContent=S.editId?"Cambios guardados ✓":"Paro registrado ✓";
+    resetForm(true);setTimeout(()=>{if(msg)msg.textContent=""},3000);
+  }catch(err){msg.className="msg errm";msg.textContent="Error: "+(err.code||err.message)}
+}
+function filasPeriodo(){
+  const rg=rango(S.periodo,S.ref);
+  return S.paros.filter(p=>p.fecha>=rg.kpiStart&&p.fecha<=(rg.per==="mes"?rg.subEnd:rg.kpiEnd))
+    .sort((a,b)=>b.fecha.localeCompare(a.fecha)||(b.creado||0)-(a.creado||0));
+}
+const nomArea=id=>S.cfg.areas.find(a=>a.id===id)?.nombre||"(área eliminada)";
+function tablaHTML(){
+  const r=filasPeriodo();
+  if(!r.length)return`<div class="empty">No hay paros en este periodo.</div>`;
+  const tot=r.reduce((s,p)=>s+(+p.minutos||0),0);
+  return`<table><thead><tr><th>Fecha</th><th>Área</th><th>Causa / falla</th><th>Min</th><th>Turno / horario</th><th>Técnico</th><th>Descripción</th><th>Origen</th></tr></thead><tbody>
+  ${r.map(p=>`<tr><td>${esc(p.fecha)}</td><td>${esc(nomArea(p.areaId))}</td><td>${esc(p.falla)}</td><td class="n">${fmt(p.minutos)}</td>
+    <td>${esc(p.turno||"")}${p.inicio?" "+esc(p.inicio)+"–"+esc(p.fin):""}</td><td>${esc(p.tecnico)}</td><td>${esc(p.descripcion)}</td>
+    <td style="white-space:nowrap">${p.origen==="excel"?`<span class="tag" title="Se corrige en el Excel">📄 Excel</span>`:`<button class="btn sm" data-act="edit" data-id="${esc(p.id)}">Editar</button> <button class="btn sm dan" data-act="del" data-id="${esc(p.id)}">Borrar</button>`}</td></tr>`).join("")}
+  </tbody><tfoot><tr><td colspan="3"><b>${r.length} paros</b></td><td class="n"><b>${fmt(tot)}</b></td><td colspan="4"></td></tr></tfoot></table>`;
+}
+function editParo(id){
+  const p=S.paros.find(x=>x.id===id),f=$("#fParo");if(!p||!f)return;
+  f.fecha.value=p.fecha;f.areaId.value=p.areaId;fillFallas(p.falla);
+  f.minutos.value=p.minutos;f.inicio.value=p.inicio||"";f.fin.value=p.fin||"";f.tecnico.value=p.tecnico||"";f.descripcion.value=p.descripcion||"";
+  S.editId=id;$("#fTit").textContent="Editar paro";$("#bSave").textContent="Guardar cambios";$("#bCancel").hidden=false;f.scrollIntoView({behavior:"smooth"});
+}
+function exportCSV(){
+  const r=filasPeriodo(),q=v=>`"${String(v??"").replace(/"/g,'""')}"`;
+  const rows=[["Fecha","Área","Grupo","Causa","Minutos","Turno","Inicio","Fin","Técnico","Descripción","Origen"],
+    ...r.map(p=>{const a=S.cfg.areas.find(x=>x.id===p.areaId);return[p.fecha,a?.nombre||"",a?.grupo||"",p.falla,p.minutos,p.turno||"",p.inicio,p.fin,p.tecnico,p.descripcion,p.origen||"manual"]})];
+  const blob=new Blob(["﻿"+rows.map(x=>x.map(q).join(",")).join("\r\n")],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`paros_${S.ref.slice(0,S.periodo==="mes"?7:10)}.csv`;a.click();
+}
+
+/* ---------- configuración ---------- */
+function renderCfg(){
+  const c=S.cfgEdit,w=$("#cfgw");
+  const dias=[1,2,3,4,5,6,0].map(d=>`<label><input type="checkbox" data-act="dia" value="${d}" ${c.diasLaborales.includes(d)?"checked":""}> ${cap(DIAS_C[d])}</label>`).join("");
+  const gOpts=sel=>c.grupos.map(g=>`<option ${g.nombre===sel?"selected":""}>${esc(g.nombre)}</option>`).join("");
+  w.innerHTML=`<div class="cfg">
+  <section><h3>General</h3><p class="h">Lo que cambies aquí se refleja en la TV en segundos al guardar.</p>
+    <div class="f2" style="grid-template-columns:2fr 1fr">
+      <div class="f"><label>Título del tablero</label><input data-k="titulo" value="${esc(c.titulo)}"></div>
+      <div class="f"><label>Periodo que muestra la TV</label><select data-k="periodoTablero"><option value="mes" ${c.periodoTablero==="mes"?"selected":""}>Acumulado del mes</option><option value="dia" ${c.periodoTablero==="dia"?"selected":""}>Solo el día de hoy</option></select></div>
+    </div>
+    <div class="f"><label>Días laborales (para calcular tiempo programado y objetivos)</label><div class="dias">${dias}</div></div>
+  </section>
+  <section><h3>Áreas / máquinas — meta del índice de tiempo muerto</h3>
+    <p class="h">Índice (%) = minutos de paro por falla ÷ tiempo de producción × 100. Si el área manda datos desde su Excel, se usan la meta del mes (Resumen fila 10) y el tiempo de producción real de ese archivo. Los valores de aquí son el respaldo para áreas que se capturan a mano.</p>
+    <table><thead><tr><th style="width:34%">Nombre</th><th>Clave (para el sincronizador)</th><th>Grupo (MTTR/MTBF)</th><th>Meta índice (%)</th><th>Horas de producción / día (si no hay Excel)</th><th></th></tr></thead><tbody>
+    ${c.areas.map((a,i)=>`<tr><td><input data-k="areas.${i}.nombre" value="${esc(a.nombre)}"></td>
+      <td><code>${esc(a.id)}</code></td>
+      <td><select data-k="areas.${i}.grupo">${gOpts(a.grupo)}</select></td>
+      <td><input type="number" min="0" step="0.1" data-k="areas.${i}.objIdx" data-t="num" value="${a.objIdx}"></td>
+      <td><input type="number" min="0" step="0.5" data-k="areas.${i}.horasDia" data-t="num" value="${a.horasDia}"></td>
+      <td style="white-space:nowrap"><button class="btn sm" data-act="aUp" data-i="${i}" title="Subir">↑</button> <button class="btn sm dan" data-act="aDel" data-i="${i}">Quitar</button></td></tr>`).join("")}
+    </tbody></table><p><button class="btn sm" data-act="aAdd">+ Agregar área</button></p>
+  </section>
+  <section><h3>Grupos — objetivos de MTTR / MTBF y catálogo de fallas</h3>
+    <p class="h">MTTR = minutos de paro ÷ número de fallas (menor es mejor). MTBF = (tiempo de producción − paro) ÷ número de fallas (mayor es mejor). Fallas: una por renglón; aparecen en la lista al capturar.</p>
+    <div class="gcards">${c.grupos.map((g,i)=>`<div class="gcard">
+      <div class="f"><label>Nombre del grupo</label><input data-k="grupos.${i}.nombre" data-grp="${i}" value="${esc(g.nombre)}"></div>
+      <div class="f2" style="grid-template-columns:1fr 1fr"><div class="f"><label>Objetivo MTTR (min, máx.)</label><input type="number" min="0" step="0.5" data-k="grupos.${i}.objMTTR" data-t="num" value="${g.objMTTR}"></div>
+      <div class="f"><label>Objetivo MTBF (h, mín.)</label><input type="number" min="0" step="0.5" data-k="grupos.${i}.objMTBF" data-t="num" value="${g.objMTBF}"></div></div>
+      <div class="f"><label>Catálogo de fallas</label><textarea data-k="grupos.${i}.fallas" data-t="lines">${esc(g.fallas.join("\n"))}</textarea></div>
+      <button class="btn sm dan" data-act="gDel" data-i="${i}">Quitar grupo</button></div>`).join("")}</div>
+    <p><button class="btn sm" data-act="gAdd">+ Agregar grupo</button></p>
+  </section>
+  <section><h3>Técnicos</h3><p class="h">Uno por renglón (sugerencias al capturar).</p>
+    <textarea data-k="tecnicos" data-t="lines" style="min-height:7rem">${esc(c.tecnicos.join("\n"))}</textarea></section>
+  ${S.store.demo?`<section><h3>Modo demo</h3><button class="btn dan" data-act="resetDemo">Borrar datos de ejemplo</button></section>`:""}
+  <div class="savebar"><button class="btn pri" data-act="cfgSave">Guardar cambios</button><button class="btn" data-act="cfgUndo">Descartar</button><span class="msg" id="cmsg"></span></div></div>`;
+}
+function setPath(o,path,val){const k=path.split(".");let t=o;for(let i=0;i<k.length-1;i++)t=t[k[i]];t[k[k.length-1]]=val}
+function cfgInput(el){
+  const k=el.dataset.k;if(!k||!S.cfgEdit)return;
+  let v=el.value;
+  if(el.dataset.t==="num")v=Number(v)||0;
+  if(el.dataset.t==="lines")v=v.split("\n").map(s=>s.trim()).filter(Boolean);
+  if(el.dataset.grp!==undefined){const old=S.cfgEdit.grupos[+el.dataset.grp].nombre;S.cfgEdit.areas.forEach(a=>{if(a.grupo===old)a.grupo=v})}
+  setPath(S.cfgEdit,k,v);
+}
+async function cfgSave(){
+  const c=S.cfgEdit,m=$("#cmsg");
+  const names=c.grupos.map(g=>g.nombre.trim());
+  if(names.some(n=>!n)||new Set(names).size!==names.length){m.className="msg errm";m.textContent="Cada grupo necesita un nombre único";return}
+  if(!c.diasLaborales.length){m.className="msg errm";m.textContent="Selecciona al menos un día laboral";return}
+  try{await S.store.saveConfig(c);m.className="msg okm";m.textContent="Guardado ✓ — la TV se actualiza sola"}
+  catch(e){m.className="msg errm";m.textContent="Error: "+(e.code||e.message)}
+}
+
+/* ========================= eventos ========================= */
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("[data-act]");if(!t)return;
+  const a=t.dataset.act,c=S.cfgEdit;
+  if(a==="view"){S.view=t.dataset.v;location.hash=S.view;renderShell()}
+  else if(a==="hoy"){S.ref=hoy();resub();renderShell()}
+  else if(a==="logout"){await S.store.logout()}
+  else if(a==="edit")editParo(t.dataset.id);
+  else if(a==="cancelEdit")resetForm(true);
+  else if(a==="del"){const p=S.paros.find(x=>x.id===t.dataset.id);
+    if(p&&confirm(`¿Borrar el paro de ${nomArea(p.areaId)} (${p.fecha}, ${p.falla}, ${p.minutos} min)?`)){try{await S.store.delParo(p.id)}catch(err){toast("Error: "+(err.code||err.message))}}}
+  else if(a==="csv")exportCSV();
+  else if(a==="dia"){const d=+t.value;c.diasLaborales=t.checked?[...new Set([...c.diasLaborales,d])]:c.diasLaborales.filter(x=>x!==d)}
+  else if(a==="aAdd"){c.areas.push({id:"a"+Date.now().toString(36),nombre:"Nueva área",grupo:c.grupos[0]?.nombre||"",objIdx:1.5,horasDia:11});renderCfg()}
+  else if(a==="aDel"){if(confirm("¿Quitar esta área? Sus paros ya registrados dejarán de contarse en el tablero.")){c.areas.splice(+t.dataset.i,1);renderCfg()}}
+  else if(a==="aUp"){const i=+t.dataset.i;if(i>0){[c.areas[i-1],c.areas[i]]=[c.areas[i],c.areas[i-1]];renderCfg()}}
+  else if(a==="gAdd"){c.grupos.push({nombre:"Grupo "+(c.grupos.length+1),objMTTR:30,objMTBF:50,fallas:["Eléctrica","Mecánica","Otro"]});renderCfg()}
+  else if(a==="gDel"){const g=c.grupos[+t.dataset.i];if(c.areas.some(x=>x.grupo===g.nombre)){alert("Primero cambia de grupo las áreas que usan "+g.nombre);return}c.grupos.splice(+t.dataset.i,1);renderCfg()}
+  else if(a==="cfgSave")cfgSave();
+  else if(a==="cfgUndo"){S.cfgEdit=clone(S.cfg);renderCfg()}
+  else if(a==="resetDemo"){if(confirm("¿Borrar todos los datos de ejemplo?"))S.store.resetDemo()}
+});
+document.addEventListener("input",e=>{
+  const el=e.target;
+  if(el.dataset.k)cfgInput(el);
+  if(el.closest("#fParo")&&(el.name==="inicio"||el.name==="fin"))calcMin();
+});
+document.addEventListener("change",e=>{
+  const el=e.target;
+  if(el.dataset.k)cfgInput(el);
+  if(el.id==="selPer"){S.periodo=el.value;if(S.periodo==="mes"&&S.ref.slice(0,7)!==hoy().slice(0,7))S.ref=S.ref.slice(0,7)+"-01";resub();renderShell()}
+  if(el.id==="inRef"&&el.value){S.ref=S.periodo==="mes"?(el.value===hoy().slice(0,7)?hoy():el.value+"-01"):el.value;resub();renderData()}
+  const f=el.closest("#fParo");
+  if(f&&el.name==="areaId")fillFallas("");
+  if(f&&el.name==="falla")$("#otraW").hidden=el.value!=="__otra";
+});
+document.addEventListener("submit",async e=>{
+  if(e.target.id==="fParo")return saveParo(e);
+  if(e.target.id==="fLogin"){e.preventDefault();const f=e.target,m=$("#lmsg");
+    try{await S.store.login(f.e.value.trim(),f.p.value)}catch(err){m.className="msg errm";m.textContent="Correo o contraseña incorrectos"}}
+});
+addEventListener("hashchange",()=>{const v=location.hash.slice(1)||"tablero";if(v!==S.view&&!S.tv){S.view=v;renderShell()}});
+
+/* ========================= arranque ========================= */
+function resub(){
+  const rg=rango(S.periodo,S.ref),k=rg.subStart+"|"+rg.subEnd;
+  if(k===S.subKey)return;
+  S.subKey=k;if(S.unsub)S.unsub();S.paros=[];S.dias=[];
+  const u1=S.store.subParos(rg.subStart,rg.subEnd,ps=>{S.paros=ps;S.lastUpd=new Date();renderData()});
+  const u2=S.store.subDias(rg.subStart,rg.subEnd,ds=>{S.dias=ds;S.lastUpd=new Date();renderData()});
+  S.unsub=()=>{u1();u2()};
+}
+try{S.store=FIREBASE_CONFIG.apiKey?await firebaseStore():demoStore()}
+catch(e){$("#app").innerHTML=`<div class="loading">No se pudo conectar con Firebase: ${esc(e.message)}<br>Revisa la conexión a internet y la configuración.</div>`;throw e}
+let first=true;
+setTimeout(()=>{if(!S.cfg){S.cfg=normCfg(null);S.periodo=S.periodo||"mes";resub();first=false;renderShell();
+  toast("No llega respuesta de Firebase. Revisa: 1) que ya creaste Firestore Database y publicaste las reglas, 2) que hay internet. Mientras, se muestra la configuración inicial.")}},8000);
+S.store.onAuth(u=>{const was=!!S.user;S.user=u;if(!first&&!S.tv&&(was!==!!u))renderShell()});
+S.store.subConfig(c=>{
+  S.cfg=normCfg(c);
+  if(!S.periodo||(S.tv&&!P.get("periodo")))S.periodo=S.cfg.periodoTablero==="dia"?"dia":"mes";
+  resub();
+  if(first||S.tv){first=false;renderShell()}
+  else if(S.view==="registro"&&$("#fParo")){fillFormOpts();renderData()}
+  else renderData();
+});
+setInterval(()=>{
+  const k=$("#clk");if(k)k.textContent=reloj();
+  if(S.tv&&S.ref!==hoy()){S.ref=hoy();resub();renderData()}
+},20000);
+</script>
+</body>
+</html>
